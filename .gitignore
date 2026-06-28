@@ -1,0 +1,16 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+*.swp
+*~
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Claude Code local/personal config (keep shareable launch.json)
+.claude/settings.local.json

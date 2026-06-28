@@ -23,15 +23,67 @@ body{margin:0;background:#F6F4EF}
 .chk:hover{border-color:#34557a}
 .btn-sub:hover{background:#23734A}
 
-/* responsive header: stack nav cleanly on small screens (inline styles need !important) */
+/* ----- smooth anchored scrolling ----- */
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.navlink::after,.btn-cta,.btn-cta .arw,.lift,.lift-d,.cell,#toTop{transition:none!important}}
+section[id]{scroll-margin-top:96px}
+::selection{background:rgba(79,161,119,.26);color:#0B1B2D}
+
+/* ----- keyboard focus rings ----- */
+a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #4FA177;outline-offset:2px}
+.fld:focus-visible{outline:2px solid #4FA177;outline-offset:1px}
+.chk:focus-within{border-color:#4FA177!important;box-shadow:0 0 0 2px rgba(79,161,119,.35)}
+
+/* ----- skip link ----- */
+.skip{position:fixed;top:-64px;left:12px;z-index:80;background:#1B603C;color:#fff;padding:.6rem 1rem;border-radius:4px;font-family:'Libre Franklin',sans-serif;font-weight:600;font-size:.9rem;text-decoration:none;transition:top .22s ease}
+.skip:focus{top:12px}
+
+/* ----- nav links: animated underline + active state ----- */
+.navlink{position:relative;transition:color .2s ease}
+.navlink::after{content:"";position:absolute;left:0;right:0;bottom:-5px;height:2px;border-radius:2px;background:#4FA177;transform:scaleX(0);transform-origin:0 50%;transition:transform .3s cubic-bezier(.22,.61,.36,1)}
+.navlink:hover::after,.navlink.active::after{transform:scaleX(1)}
+.navlink:hover,.navlink.active{color:#fff!important}
+
+/* ----- CTA buttons: lift + sliding arrow ----- */
+.btn-cta{transition:transform .2s ease,background .2s ease,box-shadow .2s ease}
+.btn-cta:hover{background:#23734A!important;transform:translateY(-2px);box-shadow:0 12px 26px -14px rgba(27,96,60,.95)}
+.btn-cta:active{transform:translateY(0)}
+.btn-cta .arw{display:inline-block;margin-left:.5rem;transition:transform .22s ease}
+.btn-cta:hover .arw{transform:translateX(4px)}
+
+/* ----- card / cell hover ----- */
+.lift{transition:transform .3s cubic-bezier(.22,.61,.36,1),box-shadow .3s ease,border-color .3s ease}
+.lift:hover{transform:translateY(-4px);box-shadow:0 20px 44px -26px rgba(11,27,45,.5);border-color:#c4ccbe!important}
+.lift-d{transition:transform .3s cubic-bezier(.22,.61,.36,1),box-shadow .3s ease,border-color .3s ease}
+.lift-d:hover{transform:translateY(-4px);box-shadow:0 22px 50px -28px rgba(0,0,0,.7);border-color:#2f4a64!important}
+.cell{transition:background .25s ease}
+.cell:hover{background:#fff}
+
+/* ----- form validation ----- */
+.fld.invalid{border-color:#C9A24A!important}
+.field-err{display:none;color:#D9A441;font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.02em;margin-top:.45rem}
+.field-err.show{display:block;animation:rowin .3s ease both}
+
+/* ----- back to top ----- */
+#toTop{position:fixed;right:22px;bottom:22px;z-index:55;width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(11,27,45,.92);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transform:translateY(14px);pointer-events:none;transition:opacity .3s ease,transform .3s ease,background .2s ease,border-color .2s ease;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+#toTop.show{opacity:1;transform:none;pointer-events:auto}
+#toTop:hover{background:#1B603C;border-color:#4FA177}
+
+/* ----- ledger verify pulse ----- */
+@keyframes verifyflash{0%{background:rgba(79,161,119,.18)}100%{background:transparent}}
+
+/* ----- responsive header: stack nav cleanly on small screens (inline styles need !important) ----- */
 @media (max-width:640px){
   #navinner{height:auto!important;flex-direction:column!important;align-items:flex-start!important;gap:.7rem!important;padding-top:.75rem!important;padding-bottom:.9rem!important}
   #navinner>div{width:100%!important;gap:1.1rem 1.3rem!important}
+  section[id]{scroll-margin-top:120px}
 }
 </style>
 <script>if(window.matchMedia&&!matchMedia('(prefers-reduced-motion:reduce)').matches){document.documentElement.classList.add('anim');}</script>
 </head>
 <body>
+
+<a href="#platform" class="skip">Skip to content</a>
 
 <div data-screen-label="Home" style="background:#F6F4EF;color:#16202B;font-family:'Libre Franklin',system-ui,sans-serif;line-height:1.6;font-size:17px;-webkit-font-smoothing:antialiased;overflow-x:hidden;min-height:100vh">
 
@@ -56,10 +108,10 @@ body{margin:0;background:#F6F4EF}
         <span style="font-family:'Source Serif 4',Georgia,serif;font-weight:600;font-size:1.4rem;letter-spacing:.004em;color:#fff">Agentu<span style="color:#4FA177;animation:dotcycle 3s infinite">.</span></span>
       </a>
       <div style="display:flex;align-items:center;gap:1.9rem;flex-wrap:wrap">
-        <a href="#platform" style="color:rgba(255,255,255,.74);font-size:.92rem;text-decoration:none">Platform</a>
-        <a href="#network" style="color:rgba(255,255,255,.74);font-size:.92rem;text-decoration:none">Network</a>
-        <a href="#company" style="color:rgba(255,255,255,.74);font-size:.92rem;text-decoration:none">Company</a>
-        <a href="#request" style="display:inline-flex;align-items:center;background:#1B603C;color:#fff;font-weight:600;font-size:.9rem;padding:.5rem 1.05rem;border-radius:3px;text-decoration:none">Get in touch</a>
+        <a href="#platform" class="navlink" style="color:rgba(255,255,255,.74);font-size:.92rem;text-decoration:none">Platform</a>
+        <a href="#network" class="navlink" style="color:rgba(255,255,255,.74);font-size:.92rem;text-decoration:none">Network</a>
+        <a href="#company" class="navlink" style="color:rgba(255,255,255,.74);font-size:.92rem;text-decoration:none">Company</a>
+        <a href="#request" class="btn-cta" style="display:inline-flex;align-items:center;background:#1B603C;color:#fff;font-weight:600;font-size:.9rem;padding:.5rem 1.05rem;border-radius:3px;text-decoration:none">Get in touch<span class="arw" aria-hidden="true">→</span></a>
       </div>
     </div>
   </nav>
@@ -73,7 +125,7 @@ body{margin:0;background:#F6F4EF}
         <h1 data-reveal style="font-family:'Source Serif 4',Georgia,serif;font-weight:600;font-size:clamp(2.5rem,5.2vw,4.1rem);line-height:1.04;letter-spacing:-.012em;margin:1.1rem 0 0">AI you can <span style="color:#4FA177">trust</span><br>with money.</h1>
         <p data-reveal style="font-size:1.12rem;color:#AEB9C6;max-width:46ch;margin:1.3rem 0 0;line-height:1.55">Agentu is the network that lets autonomous AI run banking, payments and treasury operations. Every action is recorded, monitored and verified, so you can prove what your AI did the moment it does it.</p>
         <div data-reveal style="display:flex;gap:.8rem;margin-top:2rem;flex-wrap:wrap">
-          <a href="#request" style="display:inline-flex;align-items:center;background:#1B603C;color:#fff;font-weight:600;font-size:.97rem;padding:.82rem 1.4rem;border-radius:3px;text-decoration:none">Get in touch</a>
+          <a href="#request" class="btn-cta" style="display:inline-flex;align-items:center;background:#1B603C;color:#fff;font-weight:600;font-size:.97rem;padding:.82rem 1.4rem;border-radius:3px;text-decoration:none">Get in touch<span class="arw" aria-hidden="true">→</span></a>
         </div>
         <div data-reveal style="margin-top:1.7rem;font-family:'IBM Plex Mono',monospace;font-size:.74rem;color:#8493A3;display:flex;align-items:center;gap:.55rem"><span style="width:8px;height:8px;border-radius:50%;background:#4FA177;animation:pulse 2.2s infinite"></span>agentu1 · v1.0 live · testing with first participants</div>
       </div>
@@ -113,7 +165,7 @@ body{margin:0;background:#F6F4EF}
         <p style="font-size:1.12rem;color:#54616E;margin:0;max-width:48ch">Agentu does not ask you to take AI on faith. It makes every operation provable as it happens.</p>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(244px,1fr));gap:1.2rem;margin-top:2.6rem">
-        <div data-reveal style="background:#fff;border:1px solid #DCD7CB;border-radius:4px;padding:1.7rem 1.55rem">
+        <div data-reveal class="lift" style="background:#fff;border:1px solid #DCD7CB;border-radius:4px;padding:1.7rem 1.55rem">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.05rem">
             <span style="display:inline-flex;align-items:center;gap:.35rem;font-family:'IBM Plex Mono',monospace;font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;color:#124A2B;background:rgba(27,96,60,.08);border:1px solid rgba(27,96,60,.22);padding:.28rem .55rem;border-radius:3px">✓ Recorded</span>
             <span style="font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:#A7A294">01</span>
@@ -121,7 +173,7 @@ body{margin:0;background:#F6F4EF}
           <h3 style="font-family:'Source Serif 4',Georgia,serif;font-weight:600;font-size:1.34rem;letter-spacing:-.01em;margin:0">Auditable</h3>
           <p style="margin:.65rem 0 0;color:#54616E;font-size:1.01rem;line-height:1.55">Every AI action is recorded the instant it happens, with a complete trail you can inspect, export and prove. Instantly auditable, by design.</p>
         </div>
-        <div data-reveal style="background:#fff;border:1px solid #DCD7CB;border-radius:4px;padding:1.7rem 1.55rem">
+        <div data-reveal class="lift" style="background:#fff;border:1px solid #DCD7CB;border-radius:4px;padding:1.7rem 1.55rem">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.05rem">
             <span style="display:inline-flex;align-items:center;gap:.35rem;font-family:'IBM Plex Mono',monospace;font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;color:#124A2B;background:rgba(27,96,60,.08);border:1px solid rgba(27,96,60,.22);padding:.28rem .55rem;border-radius:3px">✓ Real time</span>
             <span style="font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:#A7A294">02</span>
@@ -129,7 +181,7 @@ body{margin:0;background:#F6F4EF}
           <h3 style="font-family:'Source Serif 4',Georgia,serif;font-weight:600;font-size:1.34rem;letter-spacing:-.01em;margin:0">Monitored</h3>
           <p style="margin:.65rem 0 0;color:#54616E;font-size:1.01rem;line-height:1.55">Agentu watches every operation continuously, as it runs. Nothing executes unobserved, and nothing slips through unrecorded.</p>
         </div>
-        <div data-reveal style="background:#fff;border:1px solid #DCD7CB;border-radius:4px;padding:1.7rem 1.55rem">
+        <div data-reveal class="lift" style="background:#fff;border:1px solid #DCD7CB;border-radius:4px;padding:1.7rem 1.55rem">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.05rem">
             <span style="display:inline-flex;align-items:center;gap:.35rem;font-family:'IBM Plex Mono',monospace;font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;color:#124A2B;background:rgba(27,96,60,.08);border:1px solid rgba(27,96,60,.22);padding:.28rem .55rem;border-radius:3px">✓ Assessed</span>
             <span style="font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:#A7A294">03</span>
@@ -159,7 +211,7 @@ body{margin:0;background:#F6F4EF}
           <div><div style="font-family:'Source Serif 4',Georgia,serif;font-weight:600;font-size:1.5rem;color:#fff;letter-spacing:-.01em">End-to-end</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:#8493A3;margin-top:.25rem">payments infrastructure</div></div>
         </div>
       </div>
-      <div data-reveal style="background:#0E2236;border:1px solid #22384E;border-radius:4px;padding:1.9rem 1.8rem">
+      <div data-reveal class="lift-d" style="background:#0E2236;border:1px solid #22384E;border-radius:4px;padding:1.9rem 1.8rem">
         <span style="font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:#4FA177">Shared upside</span>
         <h3 style="font-family:'Source Serif 4',Georgia,serif;font-weight:600;color:#fff;font-size:1.42rem;letter-spacing:-.01em;margin:.7rem 0 0">One platform. Every participant earns.</h3>
         <p style="color:#AEB9C6;margin:.85rem 0 0;font-size:1.03rem;line-height:1.55">Banks and institutions join as partners and earn a revenue share based on their activity on the network. The more it is used, the more each participant earns.</p>
@@ -177,11 +229,11 @@ body{margin:0;background:#F6F4EF}
       <h2 data-reveal style="font-family:'Source Serif 4',Georgia,serif;font-weight:600;font-size:clamp(1.8rem,3.2vw,2.5rem);line-height:1.07;letter-spacing:-.01em;margin:1rem 0 0;max-width:18ch">For the institutions that move money.</h2>
       <p data-reveal style="font-size:1.12rem;color:#54616E;margin:1.1rem 0 0;max-width:56ch;line-height:1.55">Agentu is built for regulated operators and the AI running inside them, anywhere money is moved, settled or accounted for.</p>
       <div data-reveal style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));border-top:1px solid #DCD7CB;border-left:1px solid #DCD7CB;margin-top:2rem">
-        <div style="padding:1.3rem 1.15rem;border-right:1px solid #DCD7CB;border-bottom:1px solid #DCD7CB"><div style="font-family:'IBM Plex Mono',monospace;font-size:.64rem;color:#A7A294;margin-bottom:.5rem">01</div><div style="font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:1.4rem;letter-spacing:-.01em;color:#16202B">Banking</div><div style="font-size:.9rem;color:#54616E;margin-top:.4rem;line-height:1.4">Accounts, ledgers and reconciliation</div></div>
-        <div style="padding:1.3rem 1.15rem;border-right:1px solid #DCD7CB;border-bottom:1px solid #DCD7CB"><div style="font-family:'IBM Plex Mono',monospace;font-size:.64rem;color:#A7A294;margin-bottom:.5rem">02</div><div style="font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:1.4rem;letter-spacing:-.01em;color:#16202B">Acquiring</div><div style="font-size:.9rem;color:#54616E;margin-top:.4rem;line-height:1.4">Merchant settlement and netting</div></div>
-        <div style="padding:1.3rem 1.15rem;border-right:1px solid #DCD7CB;border-bottom:1px solid #DCD7CB"><div style="font-family:'IBM Plex Mono',monospace;font-size:.64rem;color:#A7A294;margin-bottom:.5rem">03</div><div style="font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:1.4rem;letter-spacing:-.01em;color:#16202B">Payments</div><div style="font-size:.9rem;color:#54616E;margin-top:.4rem;line-height:1.4">Authorisation, clearing and settlement</div></div>
-        <div style="padding:1.3rem 1.15rem;border-right:1px solid #DCD7CB;border-bottom:1px solid #DCD7CB"><div style="font-family:'IBM Plex Mono',monospace;font-size:.64rem;color:#A7A294;margin-bottom:.5rem">04</div><div style="font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:1.4rem;letter-spacing:-.01em;color:#16202B">Treasury</div><div style="font-size:.9rem;color:#54616E;margin-top:.4rem;line-height:1.4">Liquidity, sweeps and FX</div></div>
-        <div style="padding:1.3rem 1.15rem;border-right:1px solid #DCD7CB;border-bottom:1px solid #DCD7CB"><div style="font-family:'IBM Plex Mono',monospace;font-size:.64rem;color:#A7A294;margin-bottom:.5rem">05</div><div style="font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:1.4rem;letter-spacing:-.01em;color:#16202B">Remittance</div><div style="font-size:.9rem;color:#54616E;margin-top:.4rem;line-height:1.4">Cross-border payouts at scale</div></div>
+        <div class="cell" style="padding:1.3rem 1.15rem;border-right:1px solid #DCD7CB;border-bottom:1px solid #DCD7CB"><div style="font-family:'IBM Plex Mono',monospace;font-size:.64rem;color:#A7A294;margin-bottom:.5rem">01</div><div style="font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:1.4rem;letter-spacing:-.01em;color:#16202B">Banking</div><div style="font-size:.9rem;color:#54616E;margin-top:.4rem;line-height:1.4">Accounts, ledgers and reconciliation</div></div>
+        <div class="cell" style="padding:1.3rem 1.15rem;border-right:1px solid #DCD7CB;border-bottom:1px solid #DCD7CB"><div style="font-family:'IBM Plex Mono',monospace;font-size:.64rem;color:#A7A294;margin-bottom:.5rem">02</div><div style="font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:1.4rem;letter-spacing:-.01em;color:#16202B">Acquiring</div><div style="font-size:.9rem;color:#54616E;margin-top:.4rem;line-height:1.4">Merchant settlement and netting</div></div>
+        <div class="cell" style="padding:1.3rem 1.15rem;border-right:1px solid #DCD7CB;border-bottom:1px solid #DCD7CB"><div style="font-family:'IBM Plex Mono',monospace;font-size:.64rem;color:#A7A294;margin-bottom:.5rem">03</div><div style="font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:1.4rem;letter-spacing:-.01em;color:#16202B">Payments</div><div style="font-size:.9rem;color:#54616E;margin-top:.4rem;line-height:1.4">Authorisation, clearing and settlement</div></div>
+        <div class="cell" style="padding:1.3rem 1.15rem;border-right:1px solid #DCD7CB;border-bottom:1px solid #DCD7CB"><div style="font-family:'IBM Plex Mono',monospace;font-size:.64rem;color:#A7A294;margin-bottom:.5rem">04</div><div style="font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:1.4rem;letter-spacing:-.01em;color:#16202B">Treasury</div><div style="font-size:.9rem;color:#54616E;margin-top:.4rem;line-height:1.4">Liquidity, sweeps and FX</div></div>
+        <div class="cell" style="padding:1.3rem 1.15rem;border-right:1px solid #DCD7CB;border-bottom:1px solid #DCD7CB"><div style="font-family:'IBM Plex Mono',monospace;font-size:.64rem;color:#A7A294;margin-bottom:.5rem">05</div><div style="font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:1.4rem;letter-spacing:-.01em;color:#16202B">Remittance</div><div style="font-size:.9rem;color:#54616E;margin-top:.4rem;line-height:1.4">Cross-border payouts at scale</div></div>
       </div>
     </div>
   </section>
@@ -218,8 +270,8 @@ body{margin:0;background:#F6F4EF}
         </div>
         <form id="reqform" novalidate style="position:relative;max-width:640px;margin:2rem auto 0;text-align:left">
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:1.05rem">
-            <div><label for="f-name" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#AEB9C6;margin-bottom:.5rem">Name</label><input id="f-name" type="text" autocomplete="name" placeholder="Your name" style="width:100%;font-family:'Libre Franklin',sans-serif;font-size:.97rem;color:#fff;background:rgba(255,255,255,.05);border:1px solid #22384E;border-radius:3px;padding:.8rem 1rem" class="fld"></div>
-            <div><label for="f-email" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#AEB9C6;margin-bottom:.5rem">Work email</label><input id="f-email" type="email" autocomplete="email" placeholder="you@institution.com" style="width:100%;font-family:'Libre Franklin',sans-serif;font-size:.97rem;color:#fff;background:rgba(255,255,255,.05);border:1px solid #22384E;border-radius:3px;padding:.8rem 1rem" class="fld"></div>
+            <div><label for="f-name" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#AEB9C6;margin-bottom:.5rem">Name <span style="color:#4FA177">*</span></label><input id="f-name" type="text" autocomplete="name" placeholder="Your name" required aria-required="true" aria-describedby="e-name" style="width:100%;font-family:'Libre Franklin',sans-serif;font-size:.97rem;color:#fff;background:rgba(255,255,255,.05);border:1px solid #22384E;border-radius:3px;padding:.8rem 1rem" class="fld"><div class="field-err" id="e-name">Please enter your name.</div></div>
+            <div><label for="f-email" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#AEB9C6;margin-bottom:.5rem">Work email <span style="color:#4FA177">*</span></label><input id="f-email" type="email" autocomplete="email" placeholder="you@institution.com" required aria-required="true" aria-describedby="e-email" style="width:100%;font-family:'Libre Franklin',sans-serif;font-size:.97rem;color:#fff;background:rgba(255,255,255,.05);border:1px solid #22384E;border-radius:3px;padding:.8rem 1rem" class="fld"><div class="field-err" id="e-email">Enter a valid work email address.</div></div>
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:1.05rem">
             <div><label for="f-org" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#AEB9C6;margin-bottom:.5rem">Organisation</label><input id="f-org" type="text" autocomplete="organization" placeholder="Company or institution" style="width:100%;font-family:'Libre Franklin',sans-serif;font-size:.97rem;color:#fff;background:rgba(255,255,255,.05);border:1px solid #22384E;border-radius:3px;padding:.8rem 1rem" class="fld"></div>
@@ -236,9 +288,9 @@ body{margin:0;background:#F6F4EF}
             </div>
           </div>
           <div style="margin-bottom:1.1rem"><label for="f-msg" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#AEB9C6;margin-bottom:.5rem">Message <span style="color:#5d6e80;text-transform:none;letter-spacing:0">· optional</span></label><textarea id="f-msg" rows="3" placeholder="Tell us a little about what you are building or need" style="width:100%;font-family:'Libre Franklin',sans-serif;font-size:.97rem;color:#fff;background:rgba(255,255,255,.05);border:1px solid #22384E;border-radius:3px;padding:.8rem 1rem;resize:vertical;min-height:84px;line-height:1.5" class="fld"></textarea></div>
-          <button type="submit" style="width:100%;display:inline-flex;align-items:center;justify-content:center;background:#1B603C;color:#fff;font-family:'Libre Franklin',sans-serif;font-weight:600;font-size:.98rem;padding:.85rem 1.4rem;border:0;border-radius:3px;cursor:pointer" class="btn-sub">Get in touch</button>
+          <button type="submit" style="width:100%;display:inline-flex;align-items:center;justify-content:center;background:#1B603C;color:#fff;font-family:'Libre Franklin',sans-serif;font-weight:600;font-size:.98rem;padding:.85rem 1.4rem;border:0;border-radius:3px;cursor:pointer" class="btn-sub btn-cta">Get in touch<span class="arw" aria-hidden="true">→</span></button>
         </form>
-        <div id="reqok" style="position:relative;display:none;margin-top:1.2rem;color:#4FA177;font-family:'IBM Plex Mono',monospace;font-size:.85rem;align-items:center;justify-content:center;gap:.45rem;text-align:center">✓ Thanks, we will be in touch at the email you provided.</div>
+        <div id="reqok" tabindex="-1" role="status" aria-live="polite" style="position:relative;display:none;margin-top:1.2rem;color:#4FA177;font-family:'IBM Plex Mono',monospace;font-size:.85rem;align-items:center;justify-content:center;gap:.45rem;text-align:center;outline:none">✓ Thanks, we will be in touch at the email you provided.</div>
       </div>
     </div>
   </section>
@@ -250,10 +302,10 @@ body{margin:0;background:#F6F4EF}
           <span style="font-family:'Source Serif 4',Georgia,serif;font-weight:600;font-size:1.2rem;letter-spacing:.004em;color:#fff">Agentu<span style="color:#4FA177;animation:dotcycle 3s infinite">.</span></span>
         </a>
         <div style="display:flex;gap:1.8rem;flex-wrap:wrap">
-          <a href="#platform" style="color:rgba(255,255,255,.66);font-size:.92rem;text-decoration:none">Platform</a>
-          <a href="#network" style="color:rgba(255,255,255,.66);font-size:.92rem;text-decoration:none">Network</a>
-          <a href="#company" style="color:rgba(255,255,255,.66);font-size:.92rem;text-decoration:none">Company</a>
-          <a href="#request" style="color:rgba(255,255,255,.66);font-size:.92rem;text-decoration:none">Get in touch</a>
+          <a href="#platform" class="navlink" style="color:rgba(255,255,255,.66);font-size:.92rem;text-decoration:none">Platform</a>
+          <a href="#network" class="navlink" style="color:rgba(255,255,255,.66);font-size:.92rem;text-decoration:none">Network</a>
+          <a href="#company" class="navlink" style="color:rgba(255,255,255,.66);font-size:.92rem;text-decoration:none">Company</a>
+          <a href="#request" class="navlink" style="color:rgba(255,255,255,.66);font-size:.92rem;text-decoration:none">Get in touch</a>
         </div>
       </div>
       <div style="margin-top:2.2rem;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:#5d6e80">
@@ -264,6 +316,8 @@ body{margin:0;background:#F6F4EF}
   </footer>
 
 </div>
+
+<button id="toTop" aria-label="Back to top" title="Back to top"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
 
 <script>
 (function(){
@@ -313,12 +367,12 @@ body{margin:0;background:#F6F4EF}
     if(!seed){
       setTimeout(function(){
         var node=ledger.querySelector('[data-id="'+id+'"]');
-        if(node){ node.style.animation=''; node.innerHTML=rowHTML({ts:r.ts,desc:r.desc,amt:r.amt,verified:true}); }
+        if(node){ node.style.animation='verifyflash .9s ease'; node.innerHTML=rowHTML({ts:r.ts,desc:r.desc,amt:r.amt,verified:true}); }
       },640);
     }
   }
   for(var k=0;k<MAX;k++) addRow(true);
-  if(!reduce){ setInterval(function(){addRow(false);},2300); }
+  if(!reduce){ setInterval(function(){ if(!document.hidden) addRow(false); },2300); }
 
   /* ----- scroll reveal + count-up ----- */
   function countUp(el){
@@ -334,29 +388,73 @@ body{margin:0;background:#F6F4EF}
     document.querySelectorAll('[data-count]').forEach(function(el){ cio.observe(el); });
   }
 
+  /* ----- staggered reveals (group siblings) ----- */
+  (function(){
+    var parents=[];
+    document.querySelectorAll('[data-reveal]').forEach(function(el){
+      var p=el.parentNode; if(!p) return;
+      if(parents.indexOf(p)<0){ parents.push(p); p.__rvi=0; }
+      var n=p.__rvi++;
+      if(n>0) el.style.transitionDelay=Math.min(n*70,210)+'ms';
+    });
+  })();
+
+  /* ----- scrollspy: active nav section ----- */
+  if('IntersectionObserver' in window){
+    var spyLinks=[].slice.call(document.querySelectorAll('.navlink'));
+    var current=null, watched={};
+    spyLinks.forEach(function(a){ var h=a.getAttribute('href'); if(h&&h.charAt(0)==='#'&&document.querySelector(h)) watched[h]=true; });
+    var spyObs=new IntersectionObserver(function(es){
+      es.forEach(function(en){ if(en.isIntersecting) current='#'+en.target.id; });
+      spyLinks.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href')===current); });
+    }, {rootMargin:'-45% 0px -50% 0px', threshold:0});
+    Object.keys(watched).forEach(function(h){ var s=document.querySelector(h); if(s) spyObs.observe(s); });
+  }
+
   /* ----- scroll progress + nav condense ----- */
+  var fillEl=document.getElementById('scrollfill'), navEl=document.getElementById('topnav'), toTopEl=document.getElementById('toTop');
+  var scrollMax=1, navCondensed=null, toTopShown=null;
+  function measure(){ var d=document.documentElement; scrollMax=(d.scrollHeight-d.clientHeight)||1; }
   function onScroll(){
     var d=document.documentElement,b=document.body;
     var st=d.scrollTop||b.scrollTop||0;
-    var max=(d.scrollHeight-d.clientHeight)||1;
-    var f=document.getElementById('scrollfill'); if(f) f.style.transform='scaleX('+Math.min(st/max,1)+')';
-    var n=document.getElementById('topnav'); if(n) n.style.background = st>24 ? 'rgba(8,20,33,.97)' : 'rgba(11,27,45,.85)';
+    if(fillEl) fillEl.style.transform='scaleX('+Math.min(st/scrollMax,1)+')';
+    var cond=st>24;
+    if(navEl && cond!==navCondensed){ navCondensed=cond; navEl.style.background = cond ? 'rgba(8,20,33,.97)' : 'rgba(11,27,45,.85)'; }
+    if(toTopEl){ var sh=st>560; if(sh!==toTopShown){ toTopShown=sh; toTopEl.classList.toggle('show',sh); } }
   }
   window.addEventListener('scroll',onScroll,{passive:true});
-  window.addEventListener('resize',onScroll); onScroll();
+  window.addEventListener('resize',function(){ measure(); onScroll(); }); measure(); onScroll();
+  if(toTopEl){ toTopEl.addEventListener('click',function(){ window.scrollTo({top:0,behavior:reduce?'auto':'smooth'}); }); }
 
   /* ----- UTC clock ----- */
-  setInterval(function(){ var el=document.getElementById('utcclock'); if(el){ var d=new Date(); function p(n){return(n<10?'0':'')+n} el.textContent='UTC '+p(d.getUTCHours())+':'+p(d.getUTCMinutes()); } },1000);
+  var clockEl=document.getElementById('utcclock'), lastClock='';
+  function tickClock(){ if(!clockEl||document.hidden) return; var d=new Date(); function p(n){return(n<10?'0':'')+n} var t='UTC '+p(d.getUTCHours())+':'+p(d.getUTCMinutes()); if(t!==lastClock){ lastClock=t; clockEl.textContent=t; } }
+  setInterval(tickClock,15000); tickClock();
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) tickClock(); });
 
   /* ----- contact form ----- */
   var form=document.getElementById('reqform');
   if(form){
+    var nameI=document.getElementById('f-name'), emailI=document.getElementById('f-email');
+    function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+    function mark(input,errId,bad){
+      if(input){ input.classList.toggle('invalid',bad); input.setAttribute('aria-invalid',bad?'true':'false'); }
+      var e=document.getElementById(errId); if(e) e.classList.toggle('show',bad);
+    }
+    [[nameI,'e-name'],[emailI,'e-email']].forEach(function(pair){
+      if(pair[0]) pair[0].addEventListener('input',function(){ mark(pair[0],pair[1],false); });
+    });
     form.addEventListener('submit',function(ev){
       ev.preventDefault();
-      var em=form.querySelector('input[type=email]');
-      if(!em || em.value.indexOf('@')<1){ if(em){ em.focus(); em.style.borderColor='#C9A24A'; } return; }
+      var nameBad=!nameI || nameI.value.trim().length<1;
+      var emailBad=!emailI || !validEmail(emailI.value.trim());
+      mark(nameI,'e-name',nameBad);
+      mark(emailI,'e-email',emailBad);
+      var firstBad=nameBad?nameI:(emailBad?emailI:null);
+      if(firstBad){ firstBad.focus(); return; }
       form.style.display='none';
-      var ok=document.getElementById('reqok'); if(ok) ok.style.display='flex';
+      var ok=document.getElementById('reqok'); if(ok){ ok.style.display='flex'; if(ok.focus) ok.focus(); }
     });
   }
 })();

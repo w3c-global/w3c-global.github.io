@@ -1,0 +1,12 @@
+AGENTU BRAND PACK — restored 2026-06-28
+
+The uploaded files had names that did not match their contents (the set was
+scrambled). They have been renamed by actual content and arranged into the
+structure the pack's index.html expects (logos/, color/, type/).
+
+Reconstructed here because they were referenced by index.html but NOT supplied:
+  logos/agentu-wordmark-light.svg   (exact from spec: navy word, forest period, paper ground)
+  logos/agentu-wordmark-green.svg   (exact from spec: paper word, navy period, green ground)
+  type/agentu-type.css              (rebuilt from the readme's font list + the live site's scale)
+
+If you have the original versions of those three, just drop them in to replace these.

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agentu — Brand Pack</title>
+<link rel="icon" type="image/svg+xml" href="logos/agentu-favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400..700&family=Libre+Franklin:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B1B2D; --green:#1B603C; --paper:#F6F4EF; --green-light:#4FA177;
+    --ink:#16202B; --slate:#54616E; --mist:#8493A3; --line:#DCD7CB; --amber:#C9A24A;
+    --serif:'Source Serif 4',Georgia,serif; --sans:'Libre Franklin',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 40px}
+  .kicker{font-family:var(--mono);font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:#6B6456}
+  .label{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#6B6456}
+  h1,h2,h3{font-family:var(--serif);font-weight:600;letter-spacing:-.015em;margin:0}
+  .dot{color:var(--green)}
+
+  /* Header */
+  header{background:var(--navy);color:#fff;padding:64px 0 56px;position:relative;overflow:hidden}
+  header::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(680px 360px at 88% -10%,rgba(79,161,119,.16),transparent 60%)}
+  header .wrap{position:relative;z-index:1}
+  .topbar{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--mist)}
+  .pulse{display:inline-flex;align-items:center;gap:.55rem}
+  .pulse i{width:8px;height:8px;border-radius:50%;background:var(--green-light);animation:p 2.4s infinite}
+  @keyframes p{0%{box-shadow:0 0 0 0 rgba(79,161,119,.5)}70%{box-shadow:0 0 0 8px rgba(79,161,119,0)}100%{box-shadow:0 0 0 0 rgba(79,161,119,0)}}
+  header h1{font-size:120px;line-height:.9;color:#fff;margin-top:40px}
+  header h1 .dot{color:var(--green-light)}
+  header .sub{font-family:var(--serif);font-style:italic;font-size:30px;color:#AEB9C6;margin-top:18px}
+  header .meta{display:flex;gap:48px;margin-top:44px;padding-top:24px;border-top:1px solid #22384E;font-family:var(--mono);font-size:14px;letter-spacing:.05em;color:#5d6e80}
+  header .meta b{color:var(--mist);font-weight:400}
+
+  section{padding:62px 0;border-bottom:1px solid var(--line)}
+  .shead{display:flex;align-items:baseline;gap:18px;margin-bottom:32px}
+  .shead .n{font-family:var(--mono);font-size:14px;color:#A7A294}
+  .shead h2{font-size:38px}
+
+  .grid{display:grid;gap:22px}
+  .card{background:#fff;border:1px solid #E4DFD4;border-radius:5px;overflow:hidden;display:flex;flex-direction:column}
+  .preview{height:150px;display:flex;align-items:center;justify-content:center}
+  .card .foot{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-top:1px solid #E4DFD4}
+  .card .foot .fn{font-family:var(--mono);font-size:13px;color:var(--slate)}
+  .card .foot .dl{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--green);text-decoration:none}
+  .word{font-family:var(--serif);font-weight:600;font-size:46px;letter-spacing:.004em}
+
+  /* Colour */
+  .sw{border:1px solid #E4DFD4;border-radius:5px;overflow:hidden}
+  .sw .chip{height:120px}
+  .sw .info{padding:16px 18px;background:#fff}
+  .sw .nm{font-family:var(--serif);font-size:20px}
+  .sw .hx{font-family:var(--mono);font-size:14px;color:var(--slate);margin-top:6px}
+  .sw .ro{font-size:13px;color:var(--slate);margin-top:8px;line-height:1.45}
+
+  /* Type */
+  .tcard{background:#fff;border:1px solid #E4DFD4;border-radius:5px;padding:30px 32px}
+  .aa{font-size:96px;line-height:1;color:var(--navy)}
+  .files{display:grid;gap:10px;margin-top:8px}
+  .file{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #E4DFD4;border-radius:4px;padding:14px 18px;text-decoration:none}
+  .file .fn{font-family:var(--mono);font-size:14px;color:var(--ink)}
+  .file .fd{font-size:13px;color:var(--slate)}
+
+  footer{background:var(--navy);color:var(--mist);padding:40px 0;font-family:var(--mono);font-size:13px;letter-spacing:.06em}
+  footer .wrap{display:flex;justify-content:space-between;align-items:center}
+  footer .dot{color:var(--green-light)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="topbar">
+      <span>Agentu Inc</span>
+      <span class="pulse"><i></i>Brand pack · v1.0</span>
+    </div>
+    <h1>Agentu<span class="dot">.</span></h1>
+    <div class="sub">Brand Pack</div>
+    <div class="meta">
+      <span><b>Version</b>&nbsp;&nbsp;1.0</span>
+      <span><b>Issued</b>&nbsp;&nbsp;June 2026</span>
+      <span><b>For</b>&nbsp;&nbsp;Financial infrastructure for AI</span>
+    </div>
+  </div>
+</header>
+
+<!-- LOGOS -->
+<section>
+  <div class="wrap">
+    <div class="shead"><span class="n">01</span><h2>Logos</h2></div>
+    <div class="grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="card">
+        <div class="preview" style="background:var(--paper)"><span class="word" style="color:var(--navy)">Agentu<span style="color:var(--green)">.</span></span></div>
+        <div class="foot"><span class="fn">wordmark-light.svg</span><a class="dl" href="logos/agentu-wordmark-light.svg" download>Download</a></div>
+      </div>
+      <div class="card">
+        <div class="preview" style="background:var(--navy)"><span class="word" style="color:var(--paper)">Agentu<span style="color:var(--green-light)">.</span></span></div>
+        <div class="foot"><span class="fn">wordmark-dark.svg</span><a class="dl" href="logos/agentu-wordmark-dark.svg" download>Download</a></div>
+      </div>
+      <div class="card">
+        <div class="preview" style="background:var(--green)"><span class="word" style="color:var(--paper)">Agentu<span style="color:var(--navy)">.</span></span></div>
+        <div class="foot"><span class="fn">wordmark-green.svg</span><a class="dl" href="logos/agentu-wordmark-green.svg" download>Download</a></div>
+      </div>
+      <div class="card">
+        <div class="preview" style="background:var(--paper);gap:28px">
+          <div style="width:104px;height:104px;border-radius:22px;background:var(--navy);display:flex;align-items:center;justify-content:center"><span style="font-family:var(--serif);font-weight:600;font-size:56px;color:var(--paper)">A<span style="color:var(--green-light)">.</span></span></div>
+          <div style="width:56px;height:56px;border-radius:12px;background:var(--navy);display:flex;align-items:center;justify-content:center"><span style="font-family:var(--serif);font-weight:600;font-size:30px;color:var(--paper)">A<span style="color:var(--green-light)">.</span></span></div>
+        </div>
+        <div class="foot"><span class="fn">appicon.svg</span><a class="dl" href="logos/agentu-appicon.svg" download>Download</a></div>
+      </div>
+      <div class="card">
+        <div class="preview" style="background:var(--paper)">
+          <div style="width:64px;height:64px;border-radius:14px;background:var(--navy);display:flex;align-items:center;justify-content:center"><span style="font-family:var(--serif);font-weight:600;font-size:36px;color:var(--paper)">A<span style="color:var(--green-light)">.</span></span></div>
+        </div>
+        <div class="foot"><span class="fn">favicon.svg</span><a class="dl" href="logos/agentu-favicon.svg" download>Download</a></div>
+      </div>
+      <div class="card" style="background:var(--paper);border-style:dashed;justify-content:center">
+        <div style="padding:24px 22px">
+          <div class="label" style="margin-bottom:10px">Rules</div>
+          <p style="font-size:14px;line-height:1.55;color:var(--slate);margin:0">Always “Agentu” + a coloured period — the only accent. Min 120px wide on screen. Clear space = cap-height of the “A”. Never recolour the period, add a symbol, distort, or swap the font.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COLOUR -->
+<section>
+  <div class="wrap">
+    <div class="shead"><span class="n">02</span><h2>Colour</h2></div>
+    <div class="grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="sw"><div class="chip" style="background:var(--navy)"></div><div class="info"><div class="nm">Agentu Navy</div><div class="hx">#0B1B2D · rgb(11,27,45)</div><div class="ro">Primary ground, headers, icon.</div></div></div>
+      <div class="sw"><div class="chip" style="background:var(--green)"></div><div class="info"><div class="nm">Agentu Green</div><div class="hx">#1B603C · rgb(27,96,60)</div><div class="ro">Accent — the period, buttons, verified states.</div></div></div>
+      <div class="sw"><div class="chip" style="background:var(--paper);border-bottom:1px solid #E4DFD4"></div><div class="info"><div class="nm">Warm Paper</div><div class="hx">#F6F4EF · rgb(246,244,239)</div><div class="ro">The light field — warmer than white. Never pure #FFF.</div></div></div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:repeat(6,1fr);margin-top:22px">
+      <div><div style="height:90px;border-radius:4px;background:var(--green-light);border:1px solid #E4DFD4"></div><div style="font-family:var(--serif);font-size:17px;margin-top:10px">Green Light</div><div class="hx" style="font-family:var(--mono);font-size:13px;color:var(--slate);margin-top:3px">#4FA177</div></div>
+      <div><div style="height:90px;border-radius:4px;background:var(--ink);border:1px solid #E4DFD4"></div><div style="font-family:var(--serif);font-size:17px;margin-top:10px">Ink</div><div style="font-family:var(--mono);font-size:13px;color:var(--slate);margin-top:3px">#16202B</div></div>
+      <div><div style="height:90px;border-radius:4px;background:var(--slate);border:1px solid #E4DFD4"></div><div style="font-family:var(--serif);font-size:17px;margin-top:10px">Slate</div><div style="font-family:var(--mono);font-size:13px;color:var(--slate);margin-top:3px">#54616E</div></div>
+      <div><div style="height:90px;border-radius:4px;background:var(--mist);border:1px solid #E4DFD4"></div><div style="font-family:var(--serif);font-size:17px;margin-top:10px">Mist</div><div style="font-family:var(--mono);font-size:13px;color:var(--slate);margin-top:3px">#8493A3</div></div>
+      <div><div style="height:90px;border-radius:4px;background:var(--line);border:1px solid #CFC9BB"></div><div style="font-family:var(--serif);font-size:17px;margin-top:10px">Line</div><div style="font-family:var(--mono);font-size:13px;color:var(--slate);margin-top:3px">#DCD7CB</div></div>
+      <div><div style="height:90px;border-radius:4px;background:var(--amber);border:1px solid #E4DFD4"></div><div style="font-family:var(--serif);font-size:17px;margin-top:10px">Signal Amber</div><div style="font-family:var(--mono);font-size:13px;color:var(--slate);margin-top:3px">#C9A24A</div></div>
+    </div>
+
+    <div style="display:flex;height:64px;border-radius:5px;overflow:hidden;border:1px solid #E4DFD4;margin-top:26px">
+      <div style="flex:6;background:var(--paper);display:flex;align-items:center;padding-left:22px;font-family:var(--mono);font-size:14px;color:var(--slate)">Paper · 60%</div>
+      <div style="flex:3;background:var(--navy);display:flex;align-items:center;padding-left:22px;font-family:var(--mono);font-size:14px;color:var(--mist)">Navy · 30%</div>
+      <div style="flex:1;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;color:#fff">10%</div>
+    </div>
+
+    <div class="files" style="margin-top:22px;grid-template-columns:repeat(3,1fr)">
+      <a class="file" href="color/agentu-palette.svg" download><span class="fn">agentu-palette.svg</span><span class="fd">Swatch sheet</span></a>
+      <a class="file" href="color/agentu-colors.css" download><span class="fn">agentu-colors.css</span><span class="fd">CSS variables</span></a>
+      <a class="file" href="color/agentu-colors.json" download><span class="fn">agentu-colors.json</span><span class="fd">JSON tokens</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- TYPE -->
+<section>
+  <div class="wrap">
+    <div class="shead"><span class="n">03</span><h2>Typography</h2></div>
+    <div class="grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tcard"><div class="aa" style="font-family:var(--serif);font-weight:600">Aa</div><div style="font-family:var(--serif);font-size:26px;margin-top:16px">Source Serif 4</div><div class="label" style="margin-top:8px">Display &amp; headlines</div><p style="font-size:14px;color:var(--slate);line-height:1.5;margin:14px 0 0">Gravitas and editorial authority. The wordmark, titles, statements. Weights 400–600.</p></div>
+      <div class="tcard"><div class="aa" style="font-family:var(--sans);font-weight:600">Aa</div><div style="font-family:var(--serif);font-size:26px;margin-top:16px">Libre Franklin</div><div class="label" style="margin-top:8px">Body &amp; interface</div><p style="font-size:14px;color:var(--slate);line-height:1.5;margin:14px 0 0">A clear grotesque for running text and UI. Neutral, legible. Weights 400–600.</p></div>
+      <div class="tcard"><div class="aa" style="font-family:var(--mono);font-weight:500;font-size:84px">Aa</div><div style="font-family:var(--serif);font-size:26px;margin-top:16px">IBM Plex Mono</div><div class="label" style="margin-top:8px">Data &amp; labels</div><p style="font-size:14px;color:var(--slate);line-height:1.5;margin:14px 0 0">The ledger, timestamps, metadata, kickers and figures. Weights 400–500.</p></div>
+    </div>
+    <div class="files" style="margin-top:22px;grid-template-columns:1fr">
+      <a class="file" href="type/agentu-type.css" download><span class="fn">agentu-type.css</span><span class="fd">Font @import + the working type scale</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- DOWNLOAD ALL / REFS -->
+<section style="border-bottom:none">
+  <div class="wrap">
+    <div class="shead"><span class="n">04</span><h2>Everything in the pack</h2></div>
+    <div class="files" style="grid-template-columns:repeat(2,1fr)">
+      <a class="file" href="README.txt" download><span class="fn">README.txt</span><span class="fd">Specs, rules &amp; full token list</span></a>
+      <a class="file" href="logos/agentu-wordmark-light.svg" download><span class="fn">logos/agentu-wordmark-light.svg</span><span class="fd">Light ground</span></a>
+      <a class="file" href="logos/agentu-wordmark-dark.svg" download><span class="fn">logos/agentu-wordmark-dark.svg</span><span class="fd">Navy ground</span></a>
+      <a class="file" href="logos/agentu-wordmark-green.svg" download><span class="fn">logos/agentu-wordmark-green.svg</span><span class="fd">Green ground</span></a>
+      <a class="file" href="logos/agentu-appicon.svg" download><span class="fn">logos/agentu-appicon.svg</span><span class="fd">512×512 app icon</span></a>
+      <a class="file" href="logos/agentu-favicon.svg" download><span class="fn">logos/agentu-favicon.svg</span><span class="fd">32×32 favicon</span></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Agentu<span class="dot">.</span> — Brand Pack · v1.0</span>
+    <span>© 2026 Agentu Inc</span>
+  </div>
+</footer>
+
+</body>
+</html>
