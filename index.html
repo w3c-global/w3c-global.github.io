@@ -22,6 +22,12 @@ body{margin:0;background:#F6F4EF}
 .fld:focus{border-color:#4FA177;background:rgba(255,255,255,.08);outline:none}
 .chk:hover{border-color:#34557a}
 .btn-sub:hover{background:#23734A}
+
+/* responsive header: stack nav cleanly on small screens (inline styles need !important) */
+@media (max-width:640px){
+  #navinner{height:auto!important;flex-direction:column!important;align-items:flex-start!important;gap:.7rem!important;padding-top:.75rem!important;padding-bottom:.9rem!important}
+  #navinner>div{width:100%!important;gap:1.1rem 1.3rem!important}
+}
 </style>
 <script>if(window.matchMedia&&!matchMedia('(prefers-reduced-motion:reduce)').matches){document.documentElement.classList.add('anim');}</script>
 </head>
