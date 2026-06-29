@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>W3C Corp, The Worldwide Payment Technology Group</title>
+<meta name="description" content="W3C Corp is the parent of a global group building payment technology and infrastructure across the United States, Latin America and the United Kingdom." />
+<meta name="theme-color" content="#06090F" />
+<link rel="canonical" href="https://www.w3ccorp.com/" />
+
+<!-- Favicon (inline SVG data URI, avoids a 404) -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2040%2040'%3E%3Crect%20width='40'%20height='40'%20rx='9'%20fill='%2306090F'/%3E%3Ccircle%20cx='20'%20cy='20'%20r='14'%20fill='none'%20stroke='%232E6DFF'%20stroke-width='1.6'%20opacity='0.55'/%3E%3Cellipse%20cx='20'%20cy='20'%20rx='6'%20ry='14'%20fill='none'%20stroke='%235B92FF'%20stroke-width='1.6'%20opacity='0.75'/%3E%3Cpath%20d='M6%2020h28'%20stroke='%235B92FF'%20stroke-width='1.6'%20opacity='0.75'/%3E%3Ccircle%20cx='20'%20cy='20'%20r='3'%20fill='%232E6DFF'/%3E%3C/svg%3E" />
+
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="W3C Corp" />
+<meta property="og:title" content="W3C Corp, The Worldwide Payment Technology Group" />
+<meta property="og:description" content="The parent of a global group building payment technology and infrastructure across the United States, Latin America and the United Kingdom." />
+<meta property="og:url" content="https://www.w3ccorp.com/" />
+<meta property="og:image" content="https://www.w3ccorp.com/og-image.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="W3C Corp — the infrastructure behind worldwide payments." />
+<meta property="og:locale" content="en_US" />
+
+<!-- Twitter card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="W3C Corp, The Worldwide Payment Technology Group" />
+<meta name="twitter:description" content="The parent of a global group building payment technology and infrastructure across the United States, Latin America and the United Kingdom." />
+<meta name="twitter:image" content="https://www.w3ccorp.com/og-image.png" />
+<meta name="twitter:image:alt" content="W3C Corp — the infrastructure behind worldwide payments." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<!-- Organization schema -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "W3C Corp",
+  "alternateName": "The Worldwide Payment Technology Group",
+  "url": "https://www.w3ccorp.com/",
+  "description": "W3C Corp is the parent of a global group building payment technology and infrastructure across the United States, Latin America and the United Kingdom.",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "1201 North Orange Street",
+    "addressLocality": "Wilmington",
+    "addressRegion": "DE",
+    "postalCode": "19801",
+    "addressCountry": "US"
+  },
+  "areaServed": [
+    { "@type": "Country", "name": "United States" },
+    { "@type": "Place", "name": "Latin America" },
+    { "@type": "Country", "name": "United Kingdom" }
+  ]
+}
+</script>
+<style>
+  :root {
+    --bg: #06090F;
+    --bg-2: #0A0E19;
+    --surface: #0E1422;
+    --surface-2: #121A2C;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.14);
+    --text: #EAEEF8;
+    --muted: #A7B2C8;
+    --muted-2: #8A95AC;
+    --accent: #2E6DFF;
+    --accent-2: #5B92FF;
+    --accent-soft: rgba(46, 109, 255, 0.14);
+    --radius: 16px;
+    --maxw: 1180px;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: var(--accent); color: #fff; }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* ---------- Focus + a11y utilities ---------- */
+  :focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  /* Inputs draw their own focus ring, so suppress the generic outline there. */
+  .field input:focus-visible, .field textarea:focus-visible { outline: none; }
+
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .skip-link {
+    position: absolute;
+    left: 16px; top: -120px;
+    z-index: 200;
+    background: var(--accent);
+    color: #fff;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 14px;
+    padding: 12px 18px;
+    border-radius: 10px;
+    transition: top 0.2s var(--ease);
+  }
+  .skip-link:focus { top: 16px; }
+
+  .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
+
+  h1, h2, h3, .display {
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+  }
+
+  .eyebrow {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+  }
+
+  .muted { color: var(--muted); }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 14.5px;
+    font-weight: 500;
+    padding: 12px 22px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.25s var(--ease);
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 8px 30px -10px rgba(46, 109, 255, 0.7);
+  }
+  .btn-primary:hover { background: var(--accent-2); transform: translateY(-1px); box-shadow: 0 14px 36px -10px rgba(46, 109, 255, 0.85); }
+  .btn-ghost { background: transparent; color: var(--text); border-color: var(--border-strong); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent-2); background: var(--accent-soft); }
+  .btn .arrow { transition: transform 0.25s var(--ease); }
+  .btn:hover .arrow { transform: translateX(3px); }
+
+  /* ---------- Header ---------- */
+  header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    transition: background 0.3s var(--ease), border-color 0.3s var(--ease), backdrop-filter 0.3s;
+    border-bottom: 1px solid transparent;
+  }
+  header.scrolled {
+    background: rgba(6, 9, 15, 0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 72px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand .mark { width: 30px; height: 30px; flex-shrink: 0; }
+  .brand .word { font-family: "Space Grotesk", sans-serif; font-weight: 700; font-size: 19px; letter-spacing: 0.04em; }
+  .brand .word b { color: var(--accent-2); font-weight: 700; }
+  .brand .tag { display: block; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); font-family: "Space Grotesk", sans-serif; margin-top: 1px; }
+
+  .nav-links { display: flex; align-items: center; gap: 34px; }
+  .nav-links a.link {
+    font-size: 14.5px; color: var(--muted); transition: color 0.2s; position: relative;
+  }
+  .nav-links a.link:hover { color: var(--text); }
+  .nav-actions { display: flex; align-items: center; gap: 14px; }
+
+  .burger { display: none; background: none; border: none; cursor: pointer; padding: 10px; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; flex-direction: column; }
+  .burger span { display: block; width: 22px; height: 2px; background: var(--text); margin: 3px 0; transition: 0.3s var(--ease); border-radius: 2px; }
+
+  /* ---------- Hero ---------- */
+  .hero { position: relative; padding: 184px 0 110px; overflow: hidden; }
+  .hero-bg {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(900px 500px at 72% 8%, rgba(46, 109, 255, 0.20), transparent 62%),
+      radial-gradient(800px 600px at 12% 96%, rgba(46, 109, 255, 0.08), transparent 60%);
+  }
+  .grid-overlay {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, #000 40%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, #000 40%, transparent 100%);
+  }
+  .hero-inner { position: relative; z-index: 2; display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 40px; align-items: center; }
+  .hero h1 { font-size: clamp(38px, 5.4vw, 66px); margin: 22px 0 0; }
+  .hero h1 .grad {
+    background: linear-gradient(100deg, var(--accent-2), #9DBBFF);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero p.lead { font-size: clamp(16px, 1.6vw, 19px); color: var(--muted); max-width: 560px; margin: 26px 0 0; }
+  .hero-cta { display: flex; gap: 14px; margin-top: 36px; flex-wrap: wrap; }
+  .hero-regions { display: flex; gap: 26px; margin-top: 46px; flex-wrap: wrap; list-style: none; }
+  .hero-regions .r { display: flex; align-items: center; gap: 9px; font-size: 13.5px; color: var(--muted); font-family: "Space Grotesk", sans-serif; letter-spacing: 0.02em; }
+  .hero-regions .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+
+  /* ---------- Globe ---------- */
+  .globe-wrap { position: relative; display: flex; align-items: center; justify-content: center; min-height: 380px; }
+  .globe { width: 100%; max-width: 420px; height: auto; filter: drop-shadow(0 0 60px rgba(46,109,255,0.25)); }
+  .globe .spin { transform-box: fill-box; transform-origin: center; animation: spin 48s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .node { animation: pulse 2.6s ease-in-out infinite; transform-origin: center; }
+  .node:nth-child(2) { animation-delay: 0.7s; }
+  .node:nth-child(3) { animation-delay: 1.4s; }
+  @keyframes pulse { 0%,100% { opacity: 0.45; } 50% { opacity: 1; } }
+
+  /* ---------- Sections ---------- */
+  section { position: relative; }
+  .section-pad { padding: 104px 0; }
+  .sec-head { max-width: 680px; margin-bottom: 56px; }
+  .sec-head h2 { font-size: clamp(28px, 3.6vw, 42px); margin: 16px 0 0; }
+  .sec-head p { color: var(--muted); font-size: 17px; margin-top: 18px; }
+
+  .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); }
+
+  /* ---------- Pillars strip ---------- */
+  .pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .pillar { background: var(--bg-2); padding: 30px 28px; }
+  .pillar .k { font-family: "Space Grotesk", sans-serif; font-size: 15px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 10px; }
+  .pillar .k svg { color: var(--accent-2); }
+  .pillar .v { color: var(--muted); font-size: 14.5px; margin-top: 10px; }
+
+  /* ---------- Capability cards ---------- */
+  .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+  .card {
+    background: linear-gradient(180deg, var(--surface), var(--bg-2));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    transition: transform 0.3s var(--ease), border-color 0.3s, box-shadow 0.3s;
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ""; position: absolute; inset: 0; border-radius: var(--radius);
+    background: radial-gradient(400px 200px at 0% 0%, rgba(46,109,255,0.10), transparent 70%);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .card:hover { transform: translateY(-4px); border-color: var(--border-strong); box-shadow: 0 24px 50px -24px rgba(0,0,0,0.8); }
+  .card:hover::before { opacity: 1; }
+  .card .ic {
+    width: 46px; height: 46px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent-soft); border: 1px solid rgba(46,109,255,0.28); color: var(--accent-2);
+    margin-bottom: 22px;
+  }
+  .card h3 { font-size: 20px; }
+  .card p { color: var(--muted); font-size: 15px; margin-top: 12px; }
+
+  /* ---------- Group / split ---------- */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+  .group-visual {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background:
+      radial-gradient(600px 300px at 50% 0%, rgba(46,109,255,0.10), transparent 70%),
+      var(--bg-2);
+    padding: 40px 36px; position: relative;
+  }
+  .tree { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .tree .parent {
+    border: 1px solid rgba(46,109,255,0.4); background: var(--accent-soft);
+    padding: 16px 26px; border-radius: 12px; text-align: center;
+  }
+  .tree .parent .pn { font-family: "Space Grotesk", sans-serif; font-weight: 700; font-size: 18px; letter-spacing: 0.04em; }
+  .tree .parent .ps { font-size: 11.5px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px; }
+  .tree .stem { width: 1px; height: 30px; background: var(--border-strong); }
+  .tree .row { display: flex; gap: 14px; }
+  .tree .child {
+    border: 1px solid var(--border); background: var(--surface);
+    padding: 14px 16px; border-radius: 10px; text-align: center; min-width: 92px;
+    font-family: "Space Grotesk", sans-serif; font-size: 13px; color: var(--muted);
+  }
+  .tree .child .cc { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin: 0 auto 8px; opacity: 0.7; }
+
+  .group-list { list-style: none; margin-top: 26px; display: flex; flex-direction: column; gap: 16px; }
+  .group-list li { display: flex; gap: 14px; align-items: flex-start; }
+  .group-list .gi { flex-shrink: 0; width: 22px; height: 22px; margin-top: 2px; color: var(--accent-2); }
+  .group-list b { font-family: "Space Grotesk", sans-serif; font-weight: 600; display: block; font-size: 15.5px; }
+  .group-list span { color: var(--muted); font-size: 14.5px; }
+
+  /* ---------- Global presence ---------- */
+  .regions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .region {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); padding: 30px; transition: border-color 0.3s, transform 0.3s var(--ease);
+  }
+  .region:hover { border-color: var(--border-strong); transform: translateY(-3px); }
+  .region .num { font-family: "Space Grotesk", sans-serif; font-size: 13px; color: var(--accent-2); letter-spacing: 0.1em; }
+  .region h3 { font-size: 21px; margin-top: 12px; }
+  .region p { color: var(--muted); font-size: 14.5px; margin-top: 12px; }
+  .region .meta { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--muted-2); font-family: "Space Grotesk", sans-serif; letter-spacing: 0.05em; }
+
+  /* ---------- Contact ---------- */
+  .contact { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 56px; }
+  .contact-info h2 { font-size: clamp(28px, 3.4vw, 40px); }
+  .contact-info p { color: var(--muted); margin-top: 18px; font-size: 16px; max-width: 420px; }
+  .addr {
+    margin-top: 34px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--bg-2); padding: 26px;
+  }
+  .addr .label { font-size: 11.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); font-family: "Space Grotesk", sans-serif; }
+  .addr .lines { margin-top: 12px; font-size: 15.5px; line-height: 1.7; }
+  .addr .lines b { font-family: "Space Grotesk", sans-serif; }
+
+  form.enquiry { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 30px; }
+  .field { margin-bottom: 18px; }
+  .field label { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 8px; font-family: "Space Grotesk", sans-serif; letter-spacing: 0.04em; }
+  .field label .req { color: var(--accent-2); margin-left: 2px; }
+  .field input, .field textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--border-strong); border-radius: 10px;
+    padding: 13px 14px; color: var(--text); font-family: inherit; font-size: 14.5px; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .field input::placeholder, .field textarea::placeholder { color: var(--muted-2); }
+  .field input:focus, .field textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .field textarea { resize: vertical; min-height: 110px; }
+  .field input[aria-invalid="true"], .field textarea[aria-invalid="true"] { border-color: #FF7A7A; box-shadow: 0 0 0 3px rgba(255, 122, 122, 0.18); }
+  .field-error { display: none; font-size: 12.5px; color: #FF9B9B; margin-top: 7px; font-family: "Space Grotesk", sans-serif; }
+  .field-error.show { display: block; }
+  .form-note { font-size: 12.5px; color: var(--muted-2); margin-top: 14px; }
+  .form-success { display: none; text-align: center; padding: 40px 20px; }
+  .form-success.show { display: block; }
+  .form-success .check { width: 54px; height: 54px; margin: 0 auto 18px; border-radius: 50%; background: var(--accent-soft); border: 1px solid rgba(46,109,255,0.3); display: flex; align-items: center; justify-content: center; color: var(--accent-2); }
+
+  /* ---------- Footer ---------- */
+  footer { border-top: 1px solid var(--border); padding: 64px 0 40px; background: var(--bg-2); }
+  .foot-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 40px; }
+  .foot-brand .word { font-family: "Space Grotesk", sans-serif; font-weight: 700; font-size: 19px; letter-spacing: 0.04em; }
+  .foot-brand .word b { color: var(--accent-2); }
+  .foot-brand p { color: var(--muted); font-size: 14px; margin-top: 16px; max-width: 320px; }
+  .foot-col h4 { font-family: "Space Grotesk", sans-serif; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); margin-bottom: 18px; }
+  .foot-col a, .foot-col span { display: block; color: var(--muted); font-size: 14px; margin-bottom: 12px; transition: color 0.2s; }
+  .foot-col a:hover { color: var(--accent-2); }
+  .foot-bottom { margin-top: 56px; padding-top: 26px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; }
+  .foot-bottom p { font-size: 13px; color: var(--muted-2); }
+
+  /* ---------- Reveal animation ---------- */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 920px) {
+    .hero-inner { grid-template-columns: 1fr; }
+    .globe-wrap { order: -1; min-height: 280px; }
+    .globe { max-width: 320px; }
+    .split, .contact { grid-template-columns: 1fr; gap: 36px; }
+    .pillars { grid-template-columns: 1fr; }
+    .cards { grid-template-columns: 1fr; }
+    .regions { grid-template-columns: 1fr; }
+    .foot-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 720px) {
+    .nav-links { display: none; }
+    .burger { display: block; }
+    .nav-links.open {
+      display: flex; flex-direction: column; position: absolute; top: 72px; left: 0; right: 0;
+      background: rgba(6,9,15,0.96); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border);
+      padding: 24px 28px; gap: 22px; align-items: flex-start;
+    }
+    .nav-actions .btn-ghost { display: none; }
+    .hero { padding: 140px 0 80px; }
+    .section-pad { padding: 76px 0; }
+    .foot-grid { grid-template-columns: 1fr; gap: 32px; }
+    .group-visual { padding: 28px 18px; }
+    .tree .row { flex-wrap: wrap; justify-content: center; }
+    .tree .child { min-width: 84px; }
+    .wrap { padding: 0 20px; }
+  }
+  @media (max-width: 400px) {
+    .wrap { padding: 0 16px; }
+    .hero-regions { gap: 14px 20px; }
+    .hero-cta .btn { flex: 1 1 auto; justify-content: center; }
+    .pillar, .card { padding: 24px 20px; }
+    .tree .row { gap: 10px; }
+    .tree .child { min-width: 0; flex: 1 1 calc(50% - 10px); }
+    .foot-bottom { flex-direction: column; align-items: flex-start; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+    .globe .spin, .node { animation: none !important; }
+    .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body id="top">
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- ===================== HEADER ===================== -->
+<header id="header">
+  <div class="wrap nav">
+    <a class="brand" href="#top" aria-label="W3C Corp, home">
+      <svg class="mark" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <circle cx="20" cy="20" r="17" stroke="#2E6DFF" stroke-width="1.4" opacity="0.5"/>
+        <ellipse cx="20" cy="20" rx="7" ry="17" stroke="#5B92FF" stroke-width="1.4" opacity="0.7"/>
+        <path d="M3.5 20h33" stroke="#5B92FF" stroke-width="1.4" opacity="0.7"/>
+        <circle cx="20" cy="20" r="3.4" fill="#2E6DFF"/>
+        <circle cx="31.2" cy="13" r="1.8" fill="#5B92FF"/>
+      </svg>
+      <span>
+        <span class="word">W<b>3</b>C</span>
+        <span class="tag">Worldwide Payment Technology</span>
+      </span>
+    </a>
+
+    <nav class="nav-links" id="navLinks" aria-label="Primary">
+      <a class="link" href="#platform">What we do</a>
+      <a class="link" href="#group">The Group</a>
+      <a class="link" href="#global">Global</a>
+      <a class="link" href="#contact">Contact</a>
+    </nav>
+
+    <div class="nav-actions">
+      <a class="btn btn-ghost" href="#contact">Get in touch</a>
+      <button class="burger" id="burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ===================== HERO ===================== -->
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-bg"></div>
+  <div class="grid-overlay"></div>
+  <div class="wrap hero-inner">
+    <div class="hero-copy">
+      <span class="eyebrow">The Worldwide Payment Technology Group</span>
+      <h1 id="hero-title">The infrastructure behind <span class="grad">worldwide payments</span>.</h1>
+      <p class="lead">
+        W3C Corp is the parent of a global group building the technology that moves money.
+        We operate across the United States, Latin America and the United Kingdom, engineering
+        payment infrastructure for businesses that work in regulated markets.
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#contact">Get in touch <span class="arrow" aria-hidden="true">&rarr;</span></a>
+        <a class="btn btn-ghost" href="#platform">What we do</a>
+      </div>
+      <ul class="hero-regions" aria-label="Regions we operate in">
+        <li class="r"><span class="dot" aria-hidden="true"></span> United States</li>
+        <li class="r"><span class="dot" aria-hidden="true"></span> Latin America</li>
+        <li class="r"><span class="dot" aria-hidden="true"></span> United Kingdom</li>
+      </ul>
+    </div>
+
+    <div class="globe-wrap" aria-hidden="true">
+      <svg class="globe" viewBox="0 0 420 420" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <defs>
+          <radialGradient id="gcore" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="#2E6DFF" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#2E6DFF" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="gline" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#5B92FF"/>
+            <stop offset="100%" stop-color="#2E6DFF"/>
+          </linearGradient>
+        </defs>
+        <circle cx="210" cy="210" r="150" fill="url(#gcore)"/>
+        <g class="spin" stroke="url(#gline)" stroke-width="1" fill="none" opacity="0.55">
+          <circle cx="210" cy="210" r="150"/>
+          <ellipse cx="210" cy="210" rx="150" ry="50"/>
+          <ellipse cx="210" cy="210" rx="150" ry="100"/>
+          <ellipse cx="210" cy="210" rx="50" ry="150"/>
+          <ellipse cx="210" cy="210" rx="100" ry="150"/>
+          <line x1="60" y1="210" x2="360" y2="210"/>
+          <line x1="210" y1="60" x2="210" y2="360"/>
+        </g>
+        <!-- location nodes -->
+        <g>
+          <g class="node">
+            <circle cx="135" cy="150" r="13" fill="#2E6DFF" opacity="0.18"/>
+            <circle cx="135" cy="150" r="4.5" fill="#5B92FF"/>
+          </g>
+          <g class="node">
+            <circle cx="168" cy="262" r="13" fill="#2E6DFF" opacity="0.18"/>
+            <circle cx="168" cy="262" r="4.5" fill="#5B92FF"/>
+          </g>
+          <g class="node">
+            <circle cx="252" cy="138" r="13" fill="#2E6DFF" opacity="0.18"/>
+            <circle cx="252" cy="138" r="4.5" fill="#5B92FF"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PILLARS ===================== -->
+<section class="wrap" aria-labelledby="pillars-title">
+  <h2 id="pillars-title" class="sr-only">What sets the group apart</h2>
+  <div class="pillars reveal">
+    <div class="pillar">
+      <div class="k">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+        Global by design
+      </div>
+      <div class="v">Built to operate across markets, currencies and regulatory regimes from day one.</div>
+    </div>
+    <div class="pillar">
+      <div class="k">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M8 4v16"/></svg>
+        Infrastructure-first
+      </div>
+      <div class="v">Core platforms and rails engineered for reliability, scale and uptime.</div>
+    </div>
+    <div class="pillar">
+      <div class="k">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg>
+        Built for regulated markets
+      </div>
+      <div class="v">Controls, governance and oversight designed into the foundation, not bolted on.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== WHAT WE DO ===================== -->
+<section class="section-pad" id="platform" aria-labelledby="platform-title">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">What we do</span>
+      <h2 id="platform-title">Payment technology, engineered as infrastructure.</h2>
+      <p>The group designs, builds and operates the systems that let regulated businesses move money, from the rails underneath to the programs on top.</p>
+    </div>
+
+    <div class="cards">
+      <div class="card reveal">
+        <div class="ic">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>
+        </div>
+        <h3>Payment Infrastructure</h3>
+        <p>Core platforms and connectivity that underpin how money moves, designed for resilience, throughput and continuous availability.</p>
+      </div>
+
+      <div class="card reveal">
+        <div class="ic">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><path d="M4 7h16M4 7l3-3M4 7l3 3"/><path d="M20 17H4m16 0l-3-3m3 3l-3 3"/></svg>
+        </div>
+        <h3>Money Movement and Processing</h3>
+        <p>Technology that authorises, processes and settles transactions across accounts, cards and digital assets, with visibility end to end.</p>
+      </div>
+
+      <div class="card reveal">
+        <div class="ic">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        </div>
+        <h3>Program Enablement</h3>
+        <p>The tooling and services partners use to launch and run payment programs, configurable, white-labelled and ready for their market.</p>
+      </div>
+
+      <div class="card reveal">
+        <div class="ic">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <h3>Compliance and Oversight</h3>
+        <p>Risk, monitoring and governance capabilities built into the platform, so programs meet the demands of the markets they operate in.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap"><div class="divider"></div></div>
+
+<!-- ===================== THE GROUP ===================== -->
+<section class="section-pad" id="group" aria-labelledby="group-title">
+  <div class="wrap split">
+    <div class="reveal">
+      <span class="eyebrow">The Group</span>
+      <h2 id="group-title" style="font-size:clamp(28px,3.6vw,42px);margin-top:16px;">A group, built as infrastructure.</h2>
+      <p class="muted" style="margin-top:18px;font-size:16px;max-width:480px;">
+        W3C Corp sits at the top of a group of specialised payment technology companies. Each
+        operates in its own market and regulatory context. Together they share a common foundation
+        of engineering, infrastructure and oversight.
+      </p>
+      <ul class="group-list">
+        <li>
+          <svg class="gi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+          <div><b>One foundation</b><span>Shared infrastructure and standards across every operating company in the group.</span></div>
+        </li>
+        <li>
+          <svg class="gi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18"/></svg>
+          <div><b>Local by market</b><span>Operating companies positioned for the regulatory and commercial realities of their region.</span></div>
+        </li>
+        <li>
+          <svg class="gi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>
+          <div><b>Governed centrally</b><span>Group-level oversight, risk and governance holding the whole structure to one standard.</span></div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="group-visual reveal" aria-hidden="true">
+      <div class="tree">
+        <div class="parent">
+          <div class="pn">W3C Corp</div>
+          <div class="ps">Parent &middot; Infrastructure</div>
+        </div>
+        <div class="stem"></div>
+        <div class="row">
+          <div class="child"><div class="cc"></div>Americas</div>
+          <div class="child"><div class="cc"></div>Latin America</div>
+          <div class="child"><div class="cc"></div>United Kingdom</div>
+        </div>
+      </div>
+      <p style="text-align:center;color:var(--muted-2);font-size:12.5px;margin-top:26px;font-family:'Space Grotesk',sans-serif;letter-spacing:0.04em;">
+        Specialised operating companies across the group
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== GLOBAL PRESENCE ===================== -->
+<section class="section-pad" id="global" aria-labelledby="global-title" style="background:var(--bg-2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Global presence</span>
+      <h2 id="global-title">Operating where payments happen.</h2>
+      <p>A footprint spanning three of the world's most active payment regions, with the group positioned for each market it serves.</p>
+    </div>
+
+    <div class="regions">
+      <div class="region reveal">
+        <div class="num">01 / North America</div>
+        <h3>United States</h3>
+        <p>A base for the group's technology and infrastructure operations, serving partners across the US market.</p>
+        <div class="meta">PAYMENT TECHNOLOGY &middot; INFRASTRUCTURE</div>
+      </div>
+      <div class="region reveal">
+        <div class="num">02 / Americas</div>
+        <h3>Latin America</h3>
+        <p>Presence across a fast-growing region, supporting payment programs built for local needs and rails.</p>
+        <div class="meta">PAYMENT TECHNOLOGY &middot; ENABLEMENT</div>
+      </div>
+      <div class="region reveal">
+        <div class="num">03 / Europe</div>
+        <h3>United Kingdom</h3>
+        <p>A long-standing centre for the group's engineering and operations within a mature regulatory market.</p>
+        <div class="meta">PAYMENT TECHNOLOGY &middot; OVERSIGHT</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CONTACT ===================== -->
+<section class="section-pad" id="contact" aria-labelledby="contact-title">
+  <div class="wrap contact">
+    <div class="contact-info reveal">
+      <span class="eyebrow">Contact</span>
+      <h2 id="contact-title" style="margin-top:16px;">Let's talk.</h2>
+      <p>For partnership, commercial or corporate enquiries, reach the W3C Corp team. We will route your message to the right part of the group.</p>
+      <address class="addr">
+        <div class="label">Registered office</div>
+        <div class="lines">
+          <b>W3C Corp</b><br/>
+          1201 North Orange Street<br/>
+          Wilmington, Delaware 19801<br/>
+          United States
+        </div>
+      </address>
+      <p class="muted" style="margin-top:20px;font-size:13.5px;">
+        Payment technology services across the United States, Latin America and the United Kingdom.
+      </p>
+    </div>
+
+    <div class="reveal">
+      <form class="enquiry" id="enquiryForm" novalidate aria-labelledby="form-title">
+        <h3 id="form-title" class="sr-only">Send an enquiry</h3>
+        <div class="field">
+          <label for="name">Name <span class="req" aria-hidden="true">*</span></label>
+          <input type="text" id="name" name="name" placeholder="Your full name" autocomplete="name"
+                 required aria-required="true" aria-describedby="name-error" />
+          <p class="field-error" id="name-error">Please enter your name.</p>
+        </div>
+        <div class="field">
+          <label for="email">Work email <span class="req" aria-hidden="true">*</span></label>
+          <input type="email" id="email" name="email" placeholder="you@company.com" autocomplete="email"
+                 required aria-required="true" aria-describedby="email-error" />
+          <p class="field-error" id="email-error">Please enter a valid email address.</p>
+        </div>
+        <div class="field">
+          <label for="company">Company</label>
+          <input type="text" id="company" name="company" placeholder="Company name" autocomplete="organization" />
+        </div>
+        <div class="field">
+          <label for="message">How can we help? <span class="req" aria-hidden="true">*</span></label>
+          <textarea id="message" name="message" placeholder="Tell us a little about your enquiry..."
+                    required aria-required="true" aria-describedby="message-error"></textarea>
+          <p class="field-error" id="message-error">Please tell us how we can help.</p>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Send enquiry <span class="arrow" aria-hidden="true">&rarr;</span></button>
+        <p class="form-note">By submitting, you agree to be contacted by W3C Corp about your enquiry.</p>
+      </form>
+      <div class="form-success" id="formSuccess" tabindex="-1" role="status" aria-live="polite">
+        <div class="check">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true" focusable="false"><path d="M5 12l5 5L20 6"/></svg>
+        </div>
+        <h3 style="font-size:20px;">Thank you.</h3>
+        <p class="muted" style="margin-top:10px;">Your enquiry has been received. A member of the W3C Corp team will be in touch.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <div class="word">W<b>3</b>C Corp</div>
+        <p>The Worldwide Payment Technology Group. Building the infrastructure that moves money across global markets.</p>
+      </div>
+      <nav class="foot-col" aria-label="Footer">
+        <h4>Company</h4>
+        <a href="#platform">What we do</a>
+        <a href="#group">The Group</a>
+        <a href="#global">Global presence</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <div class="foot-col">
+        <h4>Office</h4>
+        <address>
+          <span>1201 North Orange Street</span>
+          <span>Wilmington, Delaware 19801</span>
+          <span>United States</span>
+        </address>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <p>&copy; 2026 W3C Corp. All rights reserved.</p>
+      <p>United States &middot; Latin America &middot; United Kingdom</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Header scroll state
+  const header = document.getElementById('header');
+  const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 12);
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // Mobile nav
+  const burger = document.getElementById('burger');
+  const navLinks = document.getElementById('navLinks');
+  const setMenu = (open) => {
+    navLinks.classList.toggle('open', open);
+    burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  };
+  burger.addEventListener('click', () => setMenu(!navLinks.classList.contains('open')));
+  navLinks.querySelectorAll('a').forEach(a =>
+    a.addEventListener('click', () => setMenu(false))
+  );
+  // Close the menu on Escape and return focus to the toggle.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && navLinks.classList.contains('open')) {
+      setMenu(false);
+      burger.focus();
+    }
+  });
+
+  // Reveal on scroll
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // Enquiry form (front-end only; wire to a backend or email service to deliver).
+  const form = document.getElementById('enquiryForm');
+  const success = document.getElementById('formSuccess');
+  const required = ['name', 'email', 'message'];
+
+  const setError = (field, show) => {
+    const err = document.getElementById(field.id + '-error');
+    field.setAttribute('aria-invalid', show ? 'true' : 'false');
+    if (err) err.classList.toggle('show', show);
+  };
+
+  // Clear a field's error as soon as it becomes valid again.
+  required.forEach(id => {
+    const field = document.getElementById(id);
+    field.addEventListener('input', () => {
+      if (field.checkValidity()) setError(field, false);
+    });
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    let firstInvalid = null;
+    required.forEach(id => {
+      const field = document.getElementById(id);
+      const valid = field.checkValidity();
+      setError(field, !valid);
+      if (!valid && !firstInvalid) firstInvalid = field;
+    });
+    if (firstInvalid) { firstInvalid.focus(); return; }
+
+    form.hidden = true;
+    success.classList.add('show');
+    // Move focus to the confirmation so screen readers and keyboard users land on it.
+    success.focus();
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# Local tooling & internal docs — NOT part of the deployed public site
+.claude/
+HANDOFF.md
+DEPLOY.md
+gen_assets.py
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
