@@ -327,14 +327,19 @@
   .group-companies { margin-top: 30px; }
   .group-companies .gc-label { font-size: 11.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); font-family: "Space Grotesk", sans-serif; margin-bottom: 14px; }
   .gc-item {
-    display: inline-flex; align-items: center; gap: 12px;
+    display: inline-flex; align-items: center; gap: 13px;
     border: 1px solid var(--border-strong); background: var(--surface);
-    border-radius: 10px; padding: 12px 16px;
-    font-family: "Space Grotesk", sans-serif; font-size: 14.5px; color: var(--text);
-    transition: border-color 0.25s var(--ease), color 0.25s, background 0.25s, transform 0.25s var(--ease);
+    border-radius: 12px; padding: 11px 16px 11px 11px;
+    transition: border-color 0.25s var(--ease), background 0.25s, transform 0.25s var(--ease);
   }
-  .gc-item:hover { border-color: var(--accent); color: var(--accent-2); background: var(--accent-soft); transform: translateY(-1px); }
-  .gc-item .gc-arrow { color: var(--accent-2); transition: transform 0.25s var(--ease); }
+  .gc-item:hover { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-1px); }
+  .gc-logo { flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.10); box-shadow: 0 3px 10px -3px rgba(0,0,0,0.7); }
+  .gc-logo svg { display: block; width: 36px; height: 36px; }
+  .gc-text { display: flex; flex-direction: column; line-height: 1.25; }
+  .gc-name { font-family: "Space Grotesk", sans-serif; font-weight: 600; font-size: 15px; color: var(--text); transition: color 0.25s; }
+  .gc-tag { font-size: 12px; color: var(--muted); }
+  .gc-item:hover .gc-name { color: var(--accent-2); }
+  .gc-arrow { margin-left: 4px; color: var(--accent-2); transition: transform 0.25s var(--ease); }
   .gc-item:hover .gc-arrow { transform: translateX(3px); }
 
   /* ---------- Global presence ---------- */
@@ -655,7 +660,17 @@
       <div class="group-companies">
         <div class="gc-label">Group companies</div>
         <a class="gc-item" href="https://fbannachan-del.github.io/agentu-site/#top">
-          Agentu Inc <span class="gc-arrow" aria-hidden="true">&rarr;</span>
+          <span class="gc-logo" aria-hidden="true">
+            <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+              <rect width="32" height="32" rx="7" fill="#0B1B2D"/>
+              <text x="15" y="23" text-anchor="middle" font-family="Georgia, 'Source Serif 4', serif" font-size="20" font-weight="700"><tspan fill="#F6F4EF">A</tspan><tspan fill="#4FA177">.</tspan></text>
+            </svg>
+          </span>
+          <span class="gc-text">
+            <span class="gc-name">Agentu Inc</span>
+            <span class="gc-tag">AI you can trust with money</span>
+          </span>
+          <span class="gc-arrow" aria-hidden="true">&rarr;</span>
         </a>
       </div>
     </div>
