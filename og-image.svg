@@ -1,0 +1,46 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="background" x1="0" y1="315" x2="1200" y2="315" gradientUnits="userSpaceOnUse">
+      <stop offset="0.44" stop-color="#06090F"/>
+      <stop offset="1" stop-color="#122957"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(870 315) rotate(90) scale(300)">
+      <stop stop-color="#2E6DFF" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#2E6DFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#background)"/>
+  <circle cx="870" cy="315" r="300" fill="url(#glow)"/>
+
+  <g transform="translate(80 74)">
+    <circle cx="30" cy="28" r="25" stroke="#2E6DFF" stroke-width="2" opacity="0.7"/>
+    <ellipse cx="30" cy="28" rx="10" ry="25" stroke="#5B92FF" stroke-width="2" opacity="0.9"/>
+    <path d="M5 28H55" stroke="#5B92FF" stroke-width="2" opacity="0.9"/>
+    <circle cx="30" cy="28" r="5" fill="#2E6DFF"/>
+    <circle cx="47" cy="18" r="3" fill="#5B92FF"/>
+    <text x="78" y="43" fill="#EAEEF8" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="700" letter-spacing="1">WORLD<tspan fill="#5B92FF">3</tspan> CORPORATION</text>
+  </g>
+
+  <text x="80" y="274" fill="#5B92FF" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" letter-spacing="5">AI · TECHNOLOGY · DLT</text>
+  <text x="80" y="360" fill="#EAEEF8" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="600" letter-spacing="-1.5">Enabling the infrastructure</text>
+  <text x="80" y="432" fill="#5B92FF" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="600" letter-spacing="-1.5">for World3.</text>
+
+  <g opacity="0.9">
+    <circle cx="870" cy="315" r="220" stroke="#2E6DFF" stroke-width="2" opacity="0.5"/>
+    <ellipse cx="870" cy="315" rx="90" ry="220" stroke="#5B92FF" stroke-width="2" opacity="0.55"/>
+    <path d="M650 315H1090" stroke="#5B92FF" stroke-width="2" opacity="0.45"/>
+    <circle cx="870" cy="315" r="45" fill="#2E6DFF" opacity="0.75"/>
+    <circle cx="1016" cy="224" r="24" fill="#5B92FF" opacity="0.6"/>
+    <circle cx="747" cy="425" r="14" fill="#5B92FF" opacity="0.5"/>
+  </g>
+
+  <g transform="translate(80 554)" fill="#A7B2C8" font-family="Arial, Helvetica, sans-serif" font-size="20">
+    <circle cx="5" cy="-6" r="5" fill="#2E6DFF"/>
+    <text x="20" y="0">FINANCIAL INFRASTRUCTURE</text>
+    <circle cx="340" cy="-6" r="5" fill="#2E6DFF"/>
+    <text x="355" y="0">REGTECH</text>
+    <circle cx="485" cy="-6" r="5" fill="#2E6DFF"/>
+    <text x="500" y="0">AI CONNECTIONS</text>
+  </g>
+</svg>
