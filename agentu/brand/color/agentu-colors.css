@@ -1,0 +1,23 @@
+/* Agentu — Brand Colour Tokens · v1.0 · 2026 Agentu Inc */
+:root {
+  /* Core */
+  --agentu-navy:        #0B1B2D; /* Primary ground, headers, icon */
+  --agentu-green:       #1B603C; /* Accent — period, buttons, verified */
+  --agentu-paper:       #F6F4EF; /* Light field (never pure #FFF) */
+
+  /* Extended */
+  --agentu-green-light: #4FA177; /* Accent on dark grounds */
+  --agentu-ink:         #16202B; /* Body text on paper */
+  --agentu-slate:       #54616E; /* Secondary text */
+  --agentu-mist:        #8493A3; /* Labels on dark */
+  --agentu-line:        #DCD7CB; /* Hairlines on paper */
+  --agentu-amber:       #C9A24A; /* Pending / attention ONLY */
+
+  /* Common support tints */
+  --agentu-card:        #FFFFFF; /* Card surface on paper */
+  --agentu-navy-deep:   #0A1626; /* Panel surface on navy */
+  --agentu-navy-line:   #22384E; /* Hairlines on navy */
+}
+
+/* Usage balance: ~60% paper / 30% navy / 10% green.
+   Green is an accent, never a field. Amber is reserved for pending only. */

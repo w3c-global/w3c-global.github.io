@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="600" viewBox="0 0 1080 600">
+  
+  <rect width="1080" height="600" fill="#F6F4EF"></rect>
+  <text x="48" y="64" class="name" font-size="34" fill="#16202B">Agentu<tspan fill="#1B603C">.</tspan> <tspan font-size="26" fill="#54616E">Colour palette</tspan></text>
+  <text x="48" y="92" class="mono" font-size="14" letter-spacing="2" fill="#8A8472">CORE · 60 PAPER / 30 NAVY / 10 GREEN</text>
+
+  
+  <g>
+    <rect x="48" y="120" width="312" height="150" rx="5" fill="#0B1B2D"></rect>
+    <rect x="384" y="120" width="312" height="150" rx="5" fill="#1B603C"></rect>
+    <rect x="720" y="120" width="312" height="150" rx="5" fill="#F6F4EF" stroke="#DCD7CB"></rect>
+    <text x="62" y="252" class="mono" font-size="14" fill="#F6F4EF">Agentu Navy   #0B1B2D</text>
+    <text x="398" y="252" class="mono" font-size="14" fill="#F6F4EF">Agentu Green  #1B603C</text>
+    <text x="734" y="252" class="mono" font-size="14" fill="#54616E">Warm Paper    #F6F4EF</text>
+  </g>
+
+  
+  <g>
+    <rect x="48" y="320" width="150" height="110" rx="5" fill="#4FA177"></rect>
+    <rect x="216" y="320" width="150" height="110" rx="5" fill="#16202B"></rect>
+    <rect x="384" y="320" width="150" height="110" rx="5" fill="#54616E"></rect>
+    <rect x="552" y="320" width="150" height="110" rx="5" fill="#8493A3"></rect>
+    <rect x="720" y="320" width="150" height="110" rx="5" fill="#DCD7CB" stroke="#CFC9BB"></rect>
+    <rect x="888" y="320" width="144" height="110" rx="5" fill="#C9A24A"></rect>
+
+    <text x="48" y="452" class="name" font-size="18" fill="#16202B">Green Light</text>
+    <text x="48" y="472" class="mono" font-size="13" fill="#54616E">#4FA177</text>
+    <text x="216" y="452" class="name" font-size="18" fill="#16202B">Ink</text>
+    <text x="216" y="472" class="mono" font-size="13" fill="#54616E">#16202B</text>
+    <text x="384" y="452" class="name" font-size="18" fill="#16202B">Slate</text>
+    <text x="384" y="472" class="mono" font-size="13" fill="#54616E">#54616E</text>
+    <text x="552" y="452" class="name" font-size="18" fill="#16202B">Mist</text>
+    <text x="552" y="472" class="mono" font-size="13" fill="#54616E">#8493A3</text>
+    <text x="720" y="452" class="name" font-size="18" fill="#16202B">Line</text>
+    <text x="720" y="472" class="mono" font-size="13" fill="#54616E">#DCD7CB</text>
+    <text x="888" y="452" class="name" font-size="18" fill="#16202B">Signal Amber</text>
+    <text x="888" y="472" class="mono" font-size="13" fill="#54616E">#C9A24A</text>
+  </g>
+
+  
+  <g>
+    <text x="48" y="528" class="mono" font-size="13" letter-spacing="2" fill="#8A8472">USAGE RATIO</text>
+    <rect x="48" y="540" width="590" height="36" fill="#F6F4EF" stroke="#DCD7CB"></rect>
+    <rect x="638" y="540" width="295" height="36" fill="#0B1B2D"></rect>
+    <rect x="933" y="540" width="99" height="36" fill="#1B603C"></rect>
+    <text x="62" y="563" class="mono" font-size="13" fill="#54616E">Paper · 60%</text>
+    <text x="652" y="563" class="mono" font-size="13" fill="#AEB9C6">Navy · 30%</text>
+    <text x="947" y="563" class="mono" font-size="12" fill="#fff">10%</text>
+  </g>
+</svg>

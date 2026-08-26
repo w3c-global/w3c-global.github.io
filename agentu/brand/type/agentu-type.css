@@ -1,0 +1,16 @@
+/* Agentu — Type · v1.0 (RECONSTRUCTED by Claude from the brand readme; original not supplied) */
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400..700&family=Libre+Franklin:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --font-display:'Source Serif 4',Georgia,serif;   /* display & headlines & wordmark, 400–600 */
+  --font-body:'Libre Franklin',system-ui,sans-serif;/* body & interface, 400–600 */
+  --font-mono:'IBM Plex Mono',ui-monospace,monospace;/* data, labels, timestamps, 400–500 */
+}
+
+/* Working scale (clamped, matches the live site) */
+.t-display{font-family:var(--font-display);font-weight:600;font-size:clamp(2.5rem,5.2vw,4.1rem);line-height:1.04;letter-spacing:-.012em}
+.t-h2{font-family:var(--font-display);font-weight:600;font-size:clamp(1.8rem,3.2vw,2.5rem);line-height:1.07;letter-spacing:-.01em}
+.t-h3{font-family:var(--font-display);font-weight:600;font-size:1.34rem;letter-spacing:-.01em}
+.t-body{font-family:var(--font-body);font-weight:400;font-size:1.06rem;line-height:1.55}
+.t-small{font-family:var(--font-body);font-weight:400;font-size:.92rem;line-height:1.5}
+.t-mono{font-family:var(--font-mono);font-weight:400;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase}

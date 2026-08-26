@@ -1,0 +1,18 @@
+{
+  "name": "Agentu",
+  "version": "1.0",
+  "balance": "~60% paper / 30% navy / 10% green",
+  "core": {
+    "navy":  { "hex": "#0B1B2D", "rgb": [11, 27, 45],   "role": "Primary ground, headers, icon" },
+    "green": { "hex": "#1B603C", "rgb": [27, 96, 60],   "role": "Accent — period, buttons, verified" },
+    "paper": { "hex": "#F6F4EF", "rgb": [246, 244, 239], "role": "Light field (never pure #FFF)" }
+  },
+  "extended": {
+    "greenLight": { "hex": "#4FA177", "rgb": [79, 161, 119], "role": "Accent on dark grounds" },
+    "ink":        { "hex": "#16202B", "rgb": [22, 32, 43],   "role": "Body text on paper" },
+    "slate":      { "hex": "#54616E", "rgb": [84, 97, 110],  "role": "Secondary text" },
+    "mist":       { "hex": "#8493A3", "rgb": [132, 147, 163],"role": "Labels on dark" },
+    "line":       { "hex": "#DCD7CB", "rgb": [220, 215, 203],"role": "Hairlines on paper" },
+    "amber":      { "hex": "#C9A24A", "rgb": [201, 162, 74], "role": "Pending / attention ONLY" }
+  }
+}
