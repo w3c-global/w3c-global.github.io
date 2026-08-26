@@ -24,4 +24,4 @@ Then open <http://localhost:4321/> for World3 or <http://localhost:4321/agentu/>
 
 GitHub Pages publishes the `main` branch from `/ (root)`. The repository-level `.nojekyll` file keeps every static asset available without Jekyll processing.
 
-The original `w3ccorp-site` and `agentu-site` commit histories were retained when the sites were consolidated here.
+The pre-consolidation corporate and Agentu site histories were retained when the sites were brought together here.
