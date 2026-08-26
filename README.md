@@ -4,9 +4,9 @@ GitHub Pages repository for World3 Corporation and its group company, Agentu.
 
 ## Sites
 
-- [World3 Corporation](https://fbannachan-del.github.io/w3c/) is published from the repository root.
-- [Agentu](https://fbannachan-del.github.io/w3c/agentu/) is published from [`agentu/`](agentu/).
-- [Agentu brand assets](https://fbannachan-del.github.io/w3c/agentu/brand/) are published from [`agentu/brand/`](agentu/brand/).
+- [World3 Corporation](https://frankiew3c.github.io/) is published from the repository root.
+- [Agentu](https://frankiew3c.github.io/agentu/) is published from [`agentu/`](agentu/).
+- [Agentu brand assets](https://frankiew3c.github.io/agentu/brand/) are published from [`agentu/brand/`](agentu/brand/).
 
 Both sites are static HTML, CSS and vanilla JavaScript. There is no build step.
 
