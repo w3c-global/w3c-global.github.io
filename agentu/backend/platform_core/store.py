@@ -48,6 +48,15 @@ class UnitOfWork:
             self.reads[key] = (version, body)
         return [copy.deepcopy(body) for _, _, body in rows], cursor
 
+    def delete_work(self, sk):
+        # Deletion is deliberately limited to the transient work queue. Domain
+        # accounts, journal and evidence records cannot use this operation.
+        if not isinstance(sk, str) or not sk.startswith("DUE#"):
+            raise PlatformError("Only transient work items can be deleted.")
+        key = ("WORK#platform", sk)
+        if self.get(*key) is not None:
+            self.writes[key] = None
+
 
 class DocumentStore:
     def __init__(self, backend):
@@ -116,6 +125,9 @@ class SQLiteBackend:
                 if actual != expected:
                     raise Conflict()
             for (pk, sk), document in transaction.writes.items():
+                if document is None:
+                    connection.execute("DELETE FROM documents WHERE pk=? AND sk=?", (pk, sk))
+                    continue
                 version = (transaction.reads[(pk, sk)][0] or 0) + 1
                 connection.execute("INSERT INTO documents (pk, sk, version, body) VALUES (?, ?, ?, ?) ON CONFLICT(pk, sk) DO UPDATE SET version=excluded.version, body=excluded.body",
                                    (pk, sk, version, json.dumps(document, separators=(",", ":"))))
@@ -161,7 +173,10 @@ class DynamoBackend:
             args = {"TableName": self.table_name, "ConditionExpression": "attribute_not_exists(pk)" if version is None else "#version = :version"}
             if version is not None:
                 args.update(ExpressionAttributeNames={"#version": "version"}, ExpressionAttributeValues={":version": {"N": str(version)}})
-            if (pk, sk) in transaction.writes:
+            if (pk, sk) in transaction.writes and transaction.writes[(pk, sk)] is None:
+                args["Key"] = self.key(pk, sk)
+                items.append({"Delete": args})
+            elif (pk, sk) in transaction.writes:
                 args["Item"] = {**self.key(pk, sk), "version": {"N": str((version or 0) + 1)},
                                 "body": {"S": json.dumps(transaction.writes[(pk, sk)], separators=(",", ":"))}}
                 items.append({"Put": args})

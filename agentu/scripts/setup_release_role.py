@@ -16,13 +16,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
     session = clients(args.profile, REGION)
     stack, values = outputs(session, args.stage)
+    if "WorkerFunctionName" not in values:
+        raise SystemExit("Apply the worker infrastructure before configuring its release role.")
     provider = f"arn:aws:iam::{EXPECTED_ACCOUNT}:oidc-provider/token.actions.githubusercontent.com"
     name = f"agentu-{args.stage}-github-release"
     trust = {"Version": "2012-10-17", "Statement": [{"Effect": "Allow", "Principal": {"Federated": provider}, "Action": "sts:AssumeRoleWithWebIdentity",
         "Condition": {"StringEquals": {"token.actions.githubusercontent.com:aud": "sts.amazonaws.com", "token.actions.githubusercontent.com:sub": f"repo:w3c-global/w3c-global.github.io:environment:agentu-{args.stage}"}}}]}
     policy = {"Version": "2012-10-17", "Statement": [
         {"Effect": "Allow", "Action": "cloudformation:DescribeStacks", "Resource": stack["StackId"]},
-        {"Effect": "Allow", "Action": ["lambda:GetFunctionConfiguration", "lambda:UpdateFunctionCode"], "Resource": f"arn:aws:lambda:{REGION}:{EXPECTED_ACCOUNT}:function:{values['FunctionName']}"},
+        {"Effect": "Allow", "Action": ["lambda:GetFunctionConfiguration", "lambda:UpdateFunctionCode"], "Resource": [f"arn:aws:lambda:{REGION}:{EXPECTED_ACCOUNT}:function:{values[key]}" for key in ("FunctionName", "WorkerFunctionName")]},
         {"Effect": "Allow", "Action": "s3:PutObject", "Resource": f"arn:aws:s3:::{values['WebBucket']}/agentu/*"},
         {"Effect": "Allow", "Action": "cloudfront:CreateInvalidation", "Resource": f"arn:aws:cloudfront::{EXPECTED_ACCOUNT}:distribution/{values['DistributionId']}"}]}
     print(json.dumps({"role": name, "trust": trust, "permissions": policy}, indent=2))

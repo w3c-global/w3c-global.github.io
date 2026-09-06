@@ -55,7 +55,7 @@ class PlatformAPI:
 
     def handle(self, event, actor):
         try:
-            if not isinstance(actor, Actor):
+            if not isinstance(actor, Actor) or actor.kind != "human":
                 raise PlatformError("Sign in to Agentu.", 401, "unauthenticated")
             if not actor.verified:
                 raise PlatformError("Verify your account email.", 403, "email_unverified")
@@ -67,6 +67,8 @@ class PlatformAPI:
             headers = {k.lower(): v for k, v in event.get("headers", {}).items()}
             if method == "GET" and path == "/api/platform/me":
                 return response(200, {"user": {"sub": actor.sub, "email": actor.email}})
+            if method == "GET" and path == "/api/platform/capabilities":
+                return response(200, self.service.capabilities() if hasattr(self.service, "capabilities") else {})
             if path == "/api/platform/institutions":
                 if method == "GET":
                     return response(200, self.service.institutions(actor, after))
@@ -88,3 +90,22 @@ class PlatformAPI:
             return response(exc.status, {"error": str(exc), "code": exc.code})
         except (ValueError, UnicodeError):
             return response(400, {"error": "Invalid request encoding, JSON or query.", "code": "invalid_request"})
+
+
+class AgentAPI:
+    def __init__(self, service):
+        self.service = service
+
+    def handle(self, event):
+        method = event.get("requestContext", {}).get("http", {}).get("method", "GET")
+        if event.get("rawPath") != "/api/agent/proposals" or method != "POST":
+            return response(404, {"error": "Agent route not found.", "code": "not_found"})
+        try:
+            headers = {k.lower(): v for k, v in event.get("headers", {}).items()}
+            authorization = headers.get("authorization", "")
+            token = authorization[7:] if authorization.startswith("Bearer ") else ""
+            return response(200, self.service.submit_agent(token, payload(event), headers.get("idempotency-key")))
+        except PlatformError as exc:
+            return response(exc.status, {"error": str(exc), "code": exc.code})
+        except (ValueError, UnicodeError):
+            return response(400, {"error": "Invalid JSON request.", "code": "invalid_request"})

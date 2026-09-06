@@ -1,4 +1,5 @@
 import { signIn, finishSignIn, token, signOut } from "../demo/auth.js";
+import { createAgentUI } from "./agents.js";
 
 const $ = (selector) => document.querySelector(selector);
 const h = (value = "") =>
@@ -21,6 +22,9 @@ const S = {
   invitations: [],
   invitationCursor: null,
   authRegister: false,
+  agentCatalogue: [],
+  agentKeys: [],
+  capabilities: {},
 };
 let loadVersion = 0;
 const money = (minor, currency = "GBP") =>
@@ -148,12 +152,15 @@ async function directory() {
   } while (cursor);
   return records.filter((x) => x.status === "active");
 }
-async function accountCatalogue(root) {
+async function accountCatalogue(root, collection = "accounts") {
   let items = [],
     after;
   do {
     const page = await call(
-      root + "/accounts" + (after ? "?after=" + encodeURIComponent(after) : ""),
+      root +
+        "/" +
+        collection +
+        (after ? "?after=" + encodeURIComponent(after) : ""),
     );
     items.push(...page.items);
     after = page.next_cursor;
@@ -188,13 +195,30 @@ async function refresh() {
   sessionStorage.setItem("agentu.institution", S.tenant);
   const root = base(),
     page = view === "overview" ? "actions" : view;
-  const [overview, accounts, collection, invitations] = await Promise.all([
+  const [
+    overview,
+    accounts,
+    collection,
+    invitations,
+    agents,
+    agentKeys,
+    capabilities,
+  ] = await Promise.all([
     call(root + "/overview"),
     accountCatalogue(root),
     call(root + "/" + page),
     view === "members"
       ? call(root + "/invitations")
       : Promise.resolve({ items: [], next_cursor: null }),
+    ["agents", "runs"].includes(view)
+      ? accountCatalogue(root, "agents")
+      : Promise.resolve([]),
+    view === "agents"
+      ? accountCatalogue(root, "agent_keys")
+      : Promise.resolve([]),
+    ["agents", "runs"].includes(view)
+      ? call("/api/platform/capabilities")
+      : Promise.resolve({}),
   ]);
   if (!current()) return;
   S.overview = overview;
@@ -203,6 +227,9 @@ async function refresh() {
   S.cursor = collection.next_cursor;
   S.invitations = invitations.items;
   S.invitationCursor = invitations.next_cursor;
+  S.agentCatalogue = agents;
+  S.agentKeys = agentKeys;
+  S.capabilities = capabilities;
   $("#mode-banner").textContent =
     `${S.config.environment} · ${S.overview.institution.mode === "sandbox" ? "Sandbox: simulated funds and internal ledger transfers." : "Live institution"} · ${S.overview.institution.status === "paused" ? "Operations paused" : "Controls active"}`;
   render();
@@ -214,6 +241,9 @@ function renderAuth() {
   S.records = [];
   S.accounts = [];
   S.invitations = [];
+  S.agentCatalogue = [];
+  S.agentKeys = [];
+  S.capabilities = {};
   $("#identity").textContent = "Signed out";
   $("#logout").hidden = true;
   $("#institution").innerHTML =
@@ -302,6 +332,8 @@ function render() {
     members: renderMembers,
     journal: renderJournal,
     audit: renderAudit,
+    agents: agentUI.renderAgents,
+    runs: agentUI.renderRuns,
   };
   $("#content").innerHTML = views[S.page]();
   if (S.cursor && !["overview", "accounts"].includes(S.page))
@@ -394,7 +426,7 @@ function renderActions() {
         : "",
     ) +
     (records.length
-      ? `<div class="toolbar"><input id="operation-search" type="search" placeholder="Filter by purpose or account" aria-label="Filter operations"><select id="operation-status" aria-label="Filter by status"><option value="">All statuses</option>${["pending", "settled", "blocked", "cancelled", "declined", "expired"].map((x) => `<option value="${x}">${x}</option>`).join("")}</select></div><div class="list">${records.map((a) => `<article class="card operation" data-status="${h(a.status)}" data-search="${h((a.purpose + " " + a.source_name + " " + a.destination_name).toLowerCase())}"><header><div><span class="eyebrow">${h(a.kind.replaceAll("_", " "))} · ${h(date(a.created_at))}</span><h2>${h(money(a.amount, a.currency))} <small>→ ${h(a.destination_name)}</small></h2><p>${h(a.purpose)}</p><small>From ${h(a.source_name)} · ${h(a.approvals.length)} approval(s)${a.status === "pending" ? " · expires " + h(date(a.expires_at)) : ""}</small></div>${badge(a.status)}</header><details class="detail"><summary>Inspect policy checks and decision</summary>${a.checks.map((c) => `<div class="check"><span>${h(c.rule)}</span>${badge(c.result)}</div>`).join("")}<p class="mono">Action ${h(a.id)}<br>Policy ${h(a.policy_id)}</p>${a.close_reason ? `<p>${h(a.close_reason)}</p>` : ""}${a.approvals.map((x) => `<p><small>${h(x.sub)} · ${h(date(x.timestamp))}</small><br>${h(x.reason)}</p>`).join("")}</details>${a.status === "pending" ? `<div class="actions detail">${a.proposed_by !== S.user.sub && can("action_approve") ? actionButton("action-approve", "Approve", a.id, "primary") + actionButton("action-decline", "Decline", a.id, "danger") : ""}${can("action_cancel") && (a.proposed_by === S.user.sub || ["owner", "administrator"].includes(S.overview.membership.role)) ? actionButton("action-cancel", "Cancel request", a.id) : ""}${a.expires_at * 1000 <= Date.now() ? actionButton("action-expire", "Release expired request", a.id) : ""}${a.proposed_by === S.user.sub ? "<small>A different authorised person must approve this request.</small>" : ""}</div>` : ""}</article>`).join("")}</div>`
+      ? `<div class="toolbar"><input id="operation-search" type="search" placeholder="Filter by purpose or account" aria-label="Filter operations"><select id="operation-status" aria-label="Filter by status"><option value="">All statuses</option>${["pending", "settled", "blocked", "cancelled", "declined", "expired"].map((x) => `<option value="${x}">${x}</option>`).join("")}</select></div><div class="list">${records.map((a) => `<article class="card operation" data-status="${h(a.status)}" data-search="${h((a.purpose + " " + a.source_name + " " + a.destination_name).toLowerCase())}"><header><div><span class="eyebrow">${h(a.kind.replaceAll("_", " "))} · ${h(date(a.created_at))}</span><h2>${h(money(a.amount, a.currency))} <small>→ ${h(a.destination_name)}</small></h2><p>${h(a.purpose)}</p><small>From ${h(a.source_name)} · ${h(a.approvals.length)} approval(s)${a.status === "pending" ? " · expires " + h(date(a.expires_at)) : ""}</small></div>${badge(a.status)}</header><details class="detail"><summary>Inspect policy checks and decision</summary>${a.checks.map((c) => `<div class="check"><span>${h(c.rule)}</span>${badge(c.result)}</div>`).join("")}<p class="mono">Action ${h(a.id)}<br>Policy ${h(a.policy_id)}</p>${a.close_reason ? `<p>${h(a.close_reason)}</p>` : ""}${a.approvals.map((x) => `<p><small>${h(x.sub)} · ${h(date(x.timestamp))}</small><br>${h(x.reason)}</p>`).join("")}</details>${a.status === "pending" ? `<div class="actions detail">${a.proposed_by !== S.user.sub && a.initiated_by !== S.user.sub && can("action_approve") ? actionButton("action-approve", "Approve", a.id, "primary") + actionButton("action-decline", "Decline", a.id, "danger") : ""}${can("action_cancel") && (a.proposed_by === S.user.sub || a.initiated_by === S.user.sub || ["owner", "administrator"].includes(S.overview.membership.role)) ? actionButton("action-cancel", "Cancel request", a.id) : ""}${a.expires_at * 1000 <= Date.now() ? actionButton("action-expire", "Release expired request", a.id) : ""}${a.proposed_by === S.user.sub || a.initiated_by === S.user.sub ? "<small>A different authorised person must approve this request.</small>" : ""}</div>` : ""}</article>`).join("")}</div>`
       : empty(
           "No operations yet",
           "Propose a transfer between two asset accounts.",
@@ -428,7 +460,7 @@ function renderMembers() {
       ["Member", "Role", "Status", "Joined", ""],
       S.records.map(
         (m) =>
-          `<tr><td class="wrap"><strong>${h(m.email)}</strong>${m.sub === S.user.sub ? " <small>(you)</small>" : ""}</td><td>${h(m.role)}</td><td>${badge(m.status)}</td><td>${h(date(m.joined_at))}</td><td>${can("member_update") && m.sub !== S.user.sub ? actionButton("member-update", "Edit access", m.sub) : ""}</td></tr>`,
+          `<tr><td class="wrap"><strong>${h(m.email)}</strong>${m.sub === S.user.sub ? " <small>(you)</small>" : ""}</td><td>${h(m.role)}${m.kind === "agent" ? " · agent mandate" : ""}</td><td>${badge(m.status)}</td><td>${h(date(m.joined_at))}</td><td>${m.kind !== "agent" && can("member_update") && m.sub !== S.user.sub ? actionButton("member-update", "Edit access", m.sub) : ""}</td></tr>`,
       ),
     ) +
     `<section class="card detail"><h2>Invitations</h2>${S.invitations.length ? S.invitations.map((i) => `<div class="list-row"><div><strong>${h(i.email)}</strong><p><small>${h(i.role)} · expires ${h(date(i.expires_at))}</small></p></div><div class="actions">${badge(i.status)}${i.status === "pending" && can("invite_revoke") && (!["owner", "administrator"].includes(i.role) || S.overview.membership.role === "owner") ? actionButton("invite-revoke", "Revoke", i.id, "quiet") : ""}</div></div>`).join("") : '<p class="muted">No invitations created.</p>'}</section>`
@@ -497,6 +529,13 @@ function openForm(
   $("#dialog").showModal();
 }
 $("#close-dialog").addEventListener("click", () => $("#dialog").close());
+$("#dialog").addEventListener("close", () => {
+  if (!$("#dialog").open) {
+    $("#dialog-fields").replaceChildren();
+    submitForm = null;
+    afterForm = null;
+  }
+});
 $("#command-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!submitForm) return;
@@ -648,6 +687,7 @@ async function act(action, id) {
       "Create institution",
     );
   if (!S.overview) throw new Error("Sign in and select an institution first.");
+  if (action.startsWith("agent-")) return agentUI.act(action, id);
   if (action === "account-create")
     return form(
       "Create account",
@@ -983,6 +1023,47 @@ document.addEventListener("input", (event) => {
 document.addEventListener("change", (event) => {
   if (event.target.id === "operation-status") filterOperations();
 });
+
+const agentUI = createAgentUI({
+  S,
+  h,
+  can,
+  badge,
+  heading,
+  empty,
+  actionButton,
+  field,
+  select,
+  reason,
+  jsonDetails,
+  money,
+  date,
+  openForm,
+  minor,
+  command,
+  notice,
+  refresh,
+});
+let polling = false;
+setInterval(async () => {
+  if (
+    polling ||
+    document.hidden ||
+    !S.user ||
+    S.page !== "runs" ||
+    $("#dialog").open ||
+    $("#content details[open]")
+  )
+    return;
+  polling = true;
+  try {
+    await refresh();
+  } catch (e) {
+    notice(e.message, true);
+  } finally {
+    polling = false;
+  }
+}, 10000);
 
 async function start() {
   const invite = new URLSearchParams(location.hash.slice(1)).get("invite");

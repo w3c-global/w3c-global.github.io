@@ -14,17 +14,20 @@ if __name__ == "__main__":
     stack, values = outputs(session, args.stage)
     if stack["StackStatus"] not in ("CREATE_COMPLETE", "UPDATE_COMPLETE"):
         raise SystemExit("Infrastructure is not ready for a release.")
+    if "WorkerFunctionName" not in values:
+        raise SystemExit("Apply the infrastructure change set containing the worker before releasing.")
     build()
     functions = session.client("lambda")
-    existing = functions.get_function_configuration(FunctionName=values["FunctionName"])
-    functions.update_function_code(FunctionName=values["FunctionName"], ZipFile=(OUT / "lambda.zip").read_bytes(), RevisionId=existing["RevisionId"])
-    for _ in range(12):
-        current = functions.get_function_configuration(FunctionName=values["FunctionName"])
-        if current.get("LastUpdateStatus") == "Successful":
-            break
-        if current.get("LastUpdateStatus") == "Failed":
-            raise SystemExit("Lambda update failed: " + current.get("LastUpdateStatusReason", "unknown"))
-        time.sleep(5)
-    else:
-        raise SystemExit("Lambda is still updating. Check its status before publishing.")
+    for key in ("WorkerFunctionName", "FunctionName"):
+        existing = functions.get_function_configuration(FunctionName=values[key])
+        functions.update_function_code(FunctionName=values[key], ZipFile=(OUT / "lambda.zip").read_bytes(), RevisionId=existing["RevisionId"])
+        for _ in range(12):
+            current = functions.get_function_configuration(FunctionName=values[key])
+            if current.get("LastUpdateStatus") == "Successful":
+                break
+            if current.get("LastUpdateStatus") == "Failed":
+                raise SystemExit("Lambda update failed: " + current.get("LastUpdateStatusReason", "unknown"))
+            time.sleep(5)
+        else:
+            raise SystemExit("Lambda is still updating. Check its status before publishing.")
     publish(session, args.stage)

@@ -9,10 +9,10 @@ The active objective is to build Agentu as an operational product. The guided de
 | Configurable, governed policy | Versioned limits and mandates, independent publication, full decision evidence and concurrent-change tests | Built and tested locally; hosted checks pending |
 | Accounts and ledger | Multiple currencies, balanced append-only journal entries, reservations, reversals and reconciliation | Accounts, journal and reservations built; reversals/reconciliation pending |
 | Payment/treasury operations | Durable action lifecycle, independent approvals, cancellation, replay safety and provider outcomes | Internal sandbox transfers built; external execution pending |
-| Agent execution | Authenticated agent identities, bounded tool permissions, model/provider integration and traceability | Not yet built |
+| Agent execution | Authenticated agent identities, bounded tool permissions, model/provider integration and traceability | Mandates, scoped credentials, durable worker and treasury rule built and tested; Bedrock adapter mock-tested; real model/deployed verification pending |
 | Financial integrations | Named provider, verified credentials, test connection, idempotent execution, authenticated callbacks and reconciliation | Provider input outstanding |
-| Evidence and monitoring | Exports, independent verification, signing/retention, alerts, incident controls and tested recovery | Paginated exports and verifier built; signing, alert delivery and restore pending |
-| Operational web application | Institution/team/account/policy/action/approval/ledger/settings journeys against the real services | Core journeys built and browser-tested; agent/provider/reconciliation journeys pending |
+| Evidence and monitoring | Exports, independent verification, signing/retention, alerts, incident controls and tested recovery | Paginated exports, verifier and worker alarms built; signing, deployed alert delivery and restore pending |
+| Operational web application | Institution/team/account/policy/action/approval/ledger/settings journeys against the real services | Core and treasury-agent journeys built and browser-tested; hosted model/provider/reconciliation journeys pending |
 | AWS environments | Verified sandbox, staging and production configuration in the designated business account, access controls and smoke tests | Account access outstanding |
 | Releases and operations | W3C source, CI, controlled releases, migration/rollback, backups and a completed restore test | CI and release foundation built |
 | Public site and handover | Accurate product claims, working contact path, hosted product entry, documentation and founder walkthrough | Site revision and walkthrough built; public cutover outstanding |

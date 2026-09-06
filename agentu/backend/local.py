@@ -1,15 +1,17 @@
 """Local rehearsal: python agentu/backend/local.py --port 4321. Loopback only."""
 import argparse
 import json
+import threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse, unquote
 import handler as api
 from storage import FileStore
 from local_auth import LocalAuth
-from platform_core.api import PlatformAPI, payload, response
+from platform_core.api import PlatformAPI, AgentAPI, payload, response
 from platform_core.errors import PlatformError
-from platform_core.service import PlatformService
+from platform_core.agents import AgentService
+from platform_core.runner import Runner
 from platform_core.store import DocumentStore, SQLiteBackend
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -81,6 +83,8 @@ class Server(SimpleHTTPRequestHandler):
                     result["headers"]["Set-Cookie"] = self.server.auth.logout(dict(self.headers))
                 else:
                     result = response(404, {"error": "Route not found."})
+            elif parsed.path.startswith("/api/agent/"):
+                result = self.server.agents.handle(event)
             elif parsed.path.startswith("/api/platform/"):
                 result = self.server.platform.handle(event, self.server.auth.actor(dict(self.headers)))
             else:
@@ -108,7 +112,23 @@ if __name__ == "__main__":
     api.store = FileStore(ROOT / ".local-demo")
     server = ThreadingHTTPServer(("127.0.0.1", args.port), Server)
     documents = DocumentStore(SQLiteBackend(ROOT / ".local-platform" / "platform.sqlite3"))
-    server.platform = PlatformAPI(PlatformService(documents))
+    service = AgentService(documents)
+    server.platform = PlatformAPI(service)
+    server.agents = AgentAPI(service)
     server.auth = LocalAuth(documents)
+    stop = threading.Event()
+    runner = Runner(service)
+    def work():
+        while not stop.is_set():
+            try:
+                runner.tick(seconds=40)
+            except Exception:
+                print(json.dumps({"error": "local_worker_failed"}), flush=True)
+            stop.wait(2)
+    threading.Thread(target=work, daemon=True).start()
     print(f"Agentu local rehearsal: http://127.0.0.1:{args.port}/agentu/", flush=True)
-    server.serve_forever()
+    try:
+        server.serve_forever()
+    finally:
+        stop.set()
+        server.server_close()

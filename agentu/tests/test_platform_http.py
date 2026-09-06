@@ -14,7 +14,8 @@ from urllib.request import Request, build_opener, HTTPCookieProcessor
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 import local
 from local_auth import LocalAuth
-from platform_core.api import PlatformAPI, cognito_actor
+from platform_core.api import PlatformAPI, AgentAPI, cognito_actor
+from platform_core.agents import AgentService
 from platform_core.errors import PlatformError
 from platform_core.service import PlatformService
 from platform_core.store import DocumentStore, SQLiteBackend, DynamoBackend, UnitOfWork
@@ -27,7 +28,9 @@ class PlatformHttpTests(unittest.TestCase):
         cls.documents = DocumentStore(SQLiteBackend(Path(cls.temp.name) / "platform.sqlite3"))
         cls.server = local.ThreadingHTTPServer(("127.0.0.1", 0), local.Server)
         cls.server.auth = LocalAuth(cls.documents)
-        cls.server.platform = PlatformAPI(PlatformService(cls.documents))
+        service = AgentService(cls.documents)
+        cls.server.platform = PlatformAPI(service)
+        cls.server.agents = AgentAPI(service)
         cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
         cls.thread.start()
         cls.base = f"http://127.0.0.1:{cls.server.server_port}"
@@ -55,6 +58,14 @@ class PlatformHttpTests(unittest.TestCase):
         status, result = self.call("/api/platform-auth/register", body)
         self.assertEqual(200, status)
         return body, result["user"]
+
+    def test_machine_route_rejects_human_cookie_and_does_not_grant_human_access(self):
+        self.register()
+        proposal = {"source_id": "source", "destination_id": "destination", "amount": 100, "purpose": "Boundary verification"}
+        self.assertEqual(401, self.call("/api/agent/proposals", proposal)[0])
+        self.assertEqual(401, self.call("/api/agent/proposals", proposal, {"Authorization": "Bearer agtu_" + "x" * 43})[0])
+        self.cookies.clear()
+        self.assertEqual(401, self.call("/api/platform/institutions", headers={"Authorization": "Bearer agtu_" + "x" * 43})[0])
 
     def test_browser_session_registration_login_logout_and_institution(self):
         credentials, user = self.register()

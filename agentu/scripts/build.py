@@ -24,7 +24,7 @@ def build():
         shutil.copyfile(source, target)
     package = OUT / "lambda.zip"
     with zipfile.ZipFile(package, "w", zipfile.ZIP_DEFLATED) as archive:
-        for name in ("domain.py", "storage.py", "handler.py"):
+        for name in ("domain.py", "storage.py", "handler.py", "worker.py"):
             archive.write(SITE / "backend" / name, name)
         for source in sorted((SITE / "backend" / "platform_core").glob("*.py")):
             archive.write(source, "platform_core/" + source.name)

@@ -4,13 +4,14 @@ import os
 import re
 from domain import DomainError, apply, public_state
 from storage import DynamoStore
-from platform_core.api import PlatformAPI, cognito_actor
+from platform_core.api import PlatformAPI, AgentAPI, cognito_actor
 from platform_core.errors import PlatformError
-from platform_core.service import PlatformService
+from platform_core.agents import AgentService
 from platform_core.store import DocumentStore, DynamoBackend
 
 store = None
 platform = None
+agent_api = None
 
 
 def response(status, body):
@@ -19,14 +20,22 @@ def response(status, body):
 
 
 def handler(event, context):
-    global store, platform
+    global store, platform, agent_api
     path = event.get("rawPath", "")
     method = event.get("requestContext", {}).get("http", {}).get("method", "GET")
+    if path.startswith("/api/agent/"):
+        try:
+            if agent_api is None:
+                agent_api = AgentAPI(AgentService(DocumentStore(DynamoBackend(os.environ["PLATFORM_TABLE_NAME"]))))
+            return agent_api.handle(event)
+        except Exception:
+            print(json.dumps({"error": "agent_request_failed", "request_id": getattr(context, "aws_request_id", "unknown")}))
+            return response(500, {"error": "The agent service could not complete the request. Retry with the same key.", "code": "request_failed"})
     if path.startswith("/api/platform/"):
         try:
             actor = cognito_actor(event)
             if platform is None:
-                platform = PlatformAPI(PlatformService(DocumentStore(DynamoBackend(os.environ["PLATFORM_TABLE_NAME"]))))
+                platform = PlatformAPI(AgentService(DocumentStore(DynamoBackend(os.environ["PLATFORM_TABLE_NAME"]))))
             return platform.handle(event, actor)
         except PlatformError as exc:
             return response(exc.status, {"error": str(exc), "code": exc.code})

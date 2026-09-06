@@ -24,7 +24,7 @@ The proposer cannot approve their own request, including when the proposer is an
 | Approver | Independently approve or decline pending actions |
 | Auditor | Read institution records and export evidence |
 
-Every active member can release a request whose approval window has expired. An owner cannot change their own membership, and at least one active owner must remain. The application does not provide journal or audit edit/delete commands.
+The worker automatically releases expired requests that have expiry jobs. Every active member can also release an expired request explicitly. An owner cannot change their own membership, and at least one active owner must remain. The application does not provide journal or audit edit/delete commands.
 
 ## HTTP interface
 
@@ -37,7 +37,7 @@ All platform routes require an authenticated identity. Hosted requests require a
 | `POST /api/platform/institutions` | Create a sandbox institution from `name` and `currency` |
 | `POST /api/platform/invitations/accept` | Accept an email-bound invitation from a body `token` |
 | `GET /api/platform/institutions/{id}/overview` | Institution, membership, permissions, policy and initial account page |
-| `GET /api/platform/institutions/{id}/{collection}` | Accounts, actions, members, invitations, policies, journal or audit; `limit` 1–60 and optional `after` |
+| `GET /api/platform/institutions/{id}/{collection}` | Accounts, actions, members, invitations, policies, agents, agent_keys, runs, journal or audit; `limit` 1–60 and optional `after` |
 | `POST /api/platform/institutions/{id}/commands/{operation}` | Execute a permitted command |
 
 Operations: `account_create`, `account_status`, `sandbox_fund`, `invite_create`, `invite_revoke`, `member_update`, `policy_create`, `policy_publish`, `institution_pause`, `action_propose`, `action_approve`, `action_decline`, `action_cancel`, `action_expire`.
@@ -64,6 +64,6 @@ The CloudFormation template adds a separate `PlatformRecords` table, authenticat
 
 Hosted users remain administrator-provisioned in Cognito. An institution invitation assigns a role after sign-in; it does not itself create the Cognito identity. The local identity database is development-only, with hashed passwords, hashed sessions, eight-hour HttpOnly/SameSite cookies and per-identity login throttling. Keep the local server on loopback.
 
-The current service posts internal sandbox transfers. It has no external financial provider, agent identity/model runtime, beneficiary lifecycle, reconciliation/reversals, scheduled expiry worker or evidence-signing service. Those are separate unfinished requirements, tracked in `platform-scope.md`. Expired reservations currently require the explicit expiry command or an attempted review; no background release is claimed.
+The current service posts internal sandbox transfers and includes governed agent identities, scoped credentials, a treasury rule, a Bedrock adapter and an automatic expiry worker. See [Governed agents](agents.md) for authority, credential lifecycle, run processing and configuration. Real model invocation, external financial providers, beneficiary lifecycle, reconciliation/reversals and evidence signing remain unfinished or unverified in `platform-scope.md`.
 
 References: [Cognito GetUser](https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_GetUser.html), [DynamoDB transaction permissions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis-iam.html), [DynamoDB transactions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html).

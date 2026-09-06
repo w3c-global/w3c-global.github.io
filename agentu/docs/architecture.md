@@ -13,11 +13,16 @@ flowchart LR
   Lambda -->|Version-checked transaction| Platform[Institution records and journals]
   Gateway --> Logs[CloudWatch]
   Lambda --> Logs
+  ExternalAgent -->|Scoped credential: proposal route only| Gateway
+  Schedule[Every-minute schedule] --> Worker[Durable agent and expiry worker]
+  Worker --> Platform
+  Worker -->|Optional one-model permission| Bedrock
+  Worker --> Logs
 ```
 
 Separate sandbox and demo stacks use separate S3 buckets, user pools, Lambda functions, API gateways, data tables and logs in account `032312375271`, London. There is no VPC or always-on application server in this design.
 
-All state routes require a Cognito access token with the `openid` scope. The API Gateway JWT authoriser validates issuer and client; the function also rejects a missing authenticated subject. Records are keyed by that subject plus the rehearsal identifier, never by an identity supplied in the request body.
+Human state routes require a Cognito access token with the `openid` scope. The API Gateway JWT authoriser validates issuer and client; the function also rejects a missing authenticated subject. Records are keyed by that subject plus the rehearsal identifier, never by an identity supplied in the request body.
 
 The browser stores a short-lived access token and its workspace identifier in session storage. No client secret is shipped. Hosted user registration is invite-only. No user invitation has been sent by the source code.
 
@@ -45,10 +50,14 @@ Platform authentication binds the API Gateway access-token subject to Cognito Ge
 
 Both SQLite and DynamoDB implement the same document transaction contract. Every item read, including absence, is validated at commit. Writes, audit events and idempotency receipts commit atomically. A domain failure caused by inconsistent reads is validated without applying its partial writes and retried if necessary. No external network side effect occurs inside a retryable domain callback.
 
-Pending transfers reserve source funds and daily capacity. Approval rechecks the current mandate, proposer and reviewer authority, active accounts/institution, liquidity and daily limits. A policy revision invalidates earlier approvals; suspended/demoted reviewers are excluded. Self-approval and policy self-publication are prohibited. Settlement updates accounts, usage, the action, the journal and evidence in one transaction. Current expiry is explicit; a scheduled worker is still required.
+Pending transfers reserve source funds and daily capacity. Approval rechecks the current mandate, proposer and reviewer authority, active accounts/institution, liquidity and daily limits. A policy revision invalidates earlier approvals; suspended/demoted reviewers are excluded. Self-approval and policy self-publication are prohibited. Settlement updates accounts, usage, the action, the journal and evidence in one transaction. Pending actions atomically enqueue expiry jobs. The scheduled worker releases expired reservations; failures retain the job and reservation for retry. Pre-worker legacy actions retain explicit expiry.
 
 Journal postings use integer minor units and balance separately by currency. The application exposes no edit/delete journal route. This is an application control, not external evidence immutability. The standalone export verifier checks sequence, count, hashes and balanced postings without relying on the running backend.
 
+## Agent runtime
+
+AgentService extends the same transactional institution service. Independently published mandates create machine identities with account/currency/limit restrictions. External credentials bind to a specific mandate revision and an active issuing owner; they authenticate only to the exact proposal API. Internal providers use durable runs with leases, bounded attempts and cancellation. Model output is a proposal and is re-evaluated inside the settlement transaction; providers never execute ledger or banking operations directly. See [Governed agents](agents.md).
+
 ## Before live financial use
 
-Not implemented or verified: real AI/model execution, bank/payment integrations, beneficiary onboarding, regulated custody/payment operations, independent evidence signing, reversals/reconciliation, scheduled expiry, deployed multi-tenant security verification, production environment/recovery, external penetration testing, incident-response ownership and service commitments. The full requirement record remains open in `platform-scope.md`.
+Not implemented or verified: real AI/model execution, bank/payment integrations, beneficiary onboarding, regulated custody/payment operations, independent evidence signing, reversals/reconciliation, deployed multi-tenant security verification, production environment/recovery, external penetration testing, incident-response ownership and service commitments. The full requirement record remains open in `platform-scope.md`.

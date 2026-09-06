@@ -26,7 +26,7 @@ Select **Large transfer** and run £175,000. The request is held because it exce
 
 Enter a decision reason, such as “Reserve increase reviewed for this demonstration”, and choose **Approve simulated transfer**. The controls run again against current balances. Final balances after these three scenarios are £2.25m operating and £1.15m reserve.
 
-Explain that the current presenter acts as the demo operator. Separate production identities, independent reviewer roles and approvals for live financial instructions are not implemented.
+Explain that this guided page uses a presenter simulation. Open the institution application to demonstrate separately authenticated users and independent controls. Production hosting and approval of real bank instructions remain unverified.
 
 ## 5. Show the evidence — 1 minute
 
@@ -34,7 +34,17 @@ Inspect an earlier action. Select **Verify record chain** and **Export audit**. 
 
 Be exact about the proof: this checks internal consistency of the hash chain. It is not a blockchain, an external signature, an immutable archive or a regulatory certification.
 
-## 6. Agree the next decisions — 2 minutes
+## 6. Show the operational product and agent — 5 minutes
+
+Open `/agentu/app/` and the prepared fictional verification institution. Show Accounts, Team & access, Policies and the balanced Ledger. These pages use the durable institution service.
+
+In **Agents**, inspect the published Reserve steward mandate: explicit accounts, GBP 75,000 transaction limit, GBP 250,000 daily limit, GBP 1.25m source floor, GBP 150,000 reserve target and independent approval. **Agent runs** retains the worker-produced GBP 75,000 proposal and a second no-action run after the reserve reached its target. Open Operations to inspect the independent approval and the resulting settled transfer. The requester could not approve their own agent action.
+
+To make a new live local run without altering funds, start Reserve steward again. With the target met it records no action. Creating another transfer requires a reviewed mandate/target revision. Identify the provider correctly: this is a deterministic treasury rule. The Bedrock adapter is built but has not completed a real model invocation.
+
+Show the external-agent credential lifecycle and explain that its credential can submit a bounded proposal only. It cannot administer the institution or approve transfers. Company formation, hosted AWS verification and real bank integration remain open.
+
+## 7. Agree the next decisions — 2 minutes
 
 - The founder’s preferred initial customer and workflow.
 - Which existing platform/IP, if any, should be integrated with this prototype.

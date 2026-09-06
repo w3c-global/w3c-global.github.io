@@ -10,6 +10,7 @@ import time
 from datetime import datetime, timezone
 from .errors import PlatformError
 from .model import Actor, ROLES, amount, canonical, currency, digest, email, identifier, new_id, now, text
+from .jobs import enqueue
 
 ZERO = "0" * 64
 MANAGERS = {"owner", "administrator"}
@@ -81,6 +82,8 @@ def validate_policy(body):
 
 
 class PlatformService:
+    permissions = PERMISSIONS
+    collections = COLLECTIONS
     def __init__(self, store):
         self.store = store
 
@@ -138,22 +141,22 @@ class PlatformService:
             policy = required(tx, pk, "POLICY#" + tenant["policy_id"])
             accounts, cursor = tx.query(pk, "ACCOUNT#", limit=40)
             return {"institution": tenant, "membership": member, "policy": policy, "accounts": accounts,
-                    "accounts_next_cursor": cursor, "permissions": sorted(k for k, roles in PERMISSIONS.items() if member["role"] in roles)}
+                    "accounts_next_cursor": cursor, "permissions": sorted(k for k, roles in self.permissions.items() if member["role"] in roles)}
         return self.store.transact(operation)
 
     def collection(self, tenant_id, actor, collection, after=None, limit=40):
-        if collection not in COLLECTIONS:
+        if collection not in self.collections:
             raise PlatformError("Unknown collection.", 404, "not_found")
         def operation(tx):
             pk, tenant, _ = access(tx, tenant_id, actor)
-            items, cursor = tx.query(pk, COLLECTIONS[collection], after=after, limit=limit)
-            if collection == "invitations":
-                items = [{k: v for k, v in item.items() if k != "token_hash"} for item in items]
+            items, cursor = tx.query(pk, self.collections[collection], after=after, limit=limit)
+            if collection in ("invitations", "agent_keys"):
+                items = [{k: v for k, v in item.items() if k not in ("token_hash", "secret_hash")} for item in items]
             return {"items": items, "next_cursor": cursor, "as_of_sequence": tenant["event_sequence"], "as_of_head": tenant["event_head"]}
         return self.store.transact(operation)
 
     def command(self, tenant_id, actor, operation, body, request_id):
-        if not isinstance(operation, str) or operation not in PERMISSIONS:
+        if not isinstance(operation, str) or operation not in self.permissions:
             raise PlatformError("Unknown operation.", 404, "not_found")
         if not isinstance(body, dict):
             raise PlatformError("A JSON object is required.")
@@ -163,7 +166,7 @@ class PlatformService:
         fingerprint = digest({"operation": operation, "body": body})
 
         def transaction(tx):
-            pk, tenant, member = access(tx, tenant_id, actor, PERMISSIONS[operation])
+            pk, tenant, member = access(tx, tenant_id, actor, self.permissions[operation])
             key = "REQUEST#" + actor.sub + "#" + request_id
             previous = tx.get(pk, key)
             if previous:
@@ -171,8 +174,8 @@ class PlatformService:
                     raise PlatformError("Idempotency key was used with different input.", 409, "idempotency_conflict")
                 return previous["response"]
             response = getattr(self, "_" + operation)(tx, pk, tenant, actor, member, body)
-            saved = {k: v for k, v in response.items() if k != "invite_token"}
-            if "invite_token" in response:
+            saved = {k: v for k, v in response.items() if k not in ("invite_token", "agent_token")}
+            if "invite_token" in response or "agent_token" in response:
                 saved["token_shown_once"] = True
             tx.put(pk, key, {"fingerprint": fingerprint, "response": saved, "created_at": now()}, insert_only=True)
             return response
@@ -320,6 +323,8 @@ class PlatformService:
         if subject == actor.sub:
             raise PlatformError("An owner cannot change their own membership.", 409, "self_change")
         target = required(tx, pk, "MEMBER#" + subject)
+        if target.get("kind") == "agent":
+            raise PlatformError("Manage machine authority through its agent mandate.", 403, "agent_membership")
         role, status = body.get("role", target["role"]), body.get("status", target["status"])
         if not isinstance(role, str) or role not in ROLES or status not in ("active", "suspended"):
             raise PlatformError("Invalid membership role or status.")
@@ -398,9 +403,14 @@ class PlatformService:
             ("Daily limit", counted + action["amount"] <= config["daily_limit"], {"limit": config["daily_limit"], "committed_and_reserved": counted}),
             ("Liquidity floor", available - action["amount"] >= config["liquidity_floor"], {"available": available, "floor": config["liquidity_floor"]}),
         ]
+        rules.extend(self._agent_checks(tx, pk, action, held=held))
         checks = [{"rule": name, "result": "pass" if passed else "fail", "evidence": evidence} for name, passed, evidence in rules]
-        review = action["amount"] > config["auto_limit"]
-        checks.append({"rule": "Automatic limit", "result": "review" if review else "pass", "evidence": config["auto_limit"]})
+        automatic_review = action["amount"] > config["auto_limit"]
+        agent_review = self._agent_review(tx, pk, action)
+        review = automatic_review or agent_review
+        checks.append({"rule": "Automatic limit", "result": "review" if automatic_review else "pass", "evidence": config["auto_limit"]})
+        if action.get("agent_id"):
+            checks.append({"rule": "Agent independent review", "result": "review" if agent_review else "pass", "evidence": {"required": agent_review}})
         decision = "blocked" if any(c["result"] == "fail" for c in checks) else "pending" if review else "allowed"
         return policy, checks, decision
 
@@ -411,6 +421,7 @@ class PlatformService:
         usage["reserved"] += action["amount"]
         tx.put(pk, "ACCOUNT#" + source["id"], source)
         tx.put(pk, key, usage)
+        self._agent_meter(tx, pk, action, action["usage_date"], "reserved", action["amount"])
         action["reserved"] = True
 
     def _release(self, tx, pk, action):
@@ -424,6 +435,9 @@ class PlatformService:
         usage["reserved"] -= action["amount"]
         tx.put(pk, "ACCOUNT#" + source["id"], source)
         tx.put(pk, key, usage)
+        self._agent_meter(tx, pk, action, action["usage_date"], "reserved", -action["amount"])
+        if action.get("expiry_job_key"):
+            tx.delete_work(action["expiry_job_key"])
         action["reserved"] = False
 
     def _settle(self, tx, pk, actor, action):
@@ -435,6 +449,7 @@ class PlatformService:
         key, usage = self._usage(tx, pk, date, action["currency"])
         usage["executed"] += action["amount"]
         tx.put(pk, key, usage)
+        self._agent_meter(tx, pk, action, date, "executed", action["amount"])
         action.update(status="settled", settled_at=now(), journal_sequence=journal["sequence"])
         audit(tx, pk, actor, "internal_transfer_posted", journal)
 
@@ -448,8 +463,10 @@ class PlatformService:
         action = {"id": new_id(), "kind": "internal_transfer", "source_id": source_id, "source_name": source["name"],
                   "destination_id": destination_id, "destination_name": target["name"], "currency": source["currency"],
                   "amount": amount(body.get("amount")), "purpose": text(body.get("purpose"), "Purpose", 5, 500),
-                  "created_at": now(), "proposed_by": actor.sub, "approvals": [], "reserved": False,
+                  "created_at": now(), "proposed_by": actor.sub, "initiated_by": actor.initiated_by, "approvals": [], "reserved": False,
                   "usage_date": datetime.now(timezone.utc).date().isoformat(), "mode": tenant["mode"]}
+        if member.get("kind") == "agent":
+            action.update(agent_id=member["agent_id"], agent_revision=member["agent_revision"], credential_id=actor.credential_id)
         policy, checks, decision = self._evaluate(tx, pk, tenant, action)
         action.update(policy_id=policy["id"], policy_snapshot=policy["config"], checks=checks, status=decision,
                       expires_at=int(time.time()) + policy["config"]["approval_minutes"] * 60)
@@ -458,6 +475,7 @@ class PlatformService:
             self._settle(tx, pk, actor, action)
         elif decision == "pending":
             self._reserve(tx, pk, action)
+            action["expiry_job_key"] = enqueue(tx, "action_expire", tenant["id"], action["id"], due=action["expires_at"])
         tx.put(pk, "ACTION#" + action["id"], action, insert_only=True)
         current = required(tx, pk, "META")
         current["action_count"] += 1
@@ -484,7 +502,7 @@ class PlatformService:
 
     def _action_approve(self, tx, pk, tenant, actor, member, body):
         action = self._pending(tx, pk, body)
-        if actor.sub == action["proposed_by"]:
+        if actor.sub in (action["proposed_by"], action.get("initiated_by")):
             raise PlatformError("You cannot approve an action you proposed.", 403, "self_approval")
         reason = text(body.get("reason"), "Approval reason", 5, 500)
         if action["expires_at"] <= time.time():
@@ -517,13 +535,13 @@ class PlatformService:
 
     def _action_decline(self, tx, pk, tenant, actor, member, body):
         action = self._pending(tx, pk, body)
-        if action["proposed_by"] == actor.sub:
+        if actor.sub in (action["proposed_by"], action.get("initiated_by")):
             raise PlatformError("Cancel your own request instead of reviewing it.", 403, "self_approval")
         return self._finish_pending(tx, pk, actor, action, "declined", text(body.get("reason"), "Decline reason", 5, 500))
 
     def _action_cancel(self, tx, pk, tenant, actor, member, body):
         action = self._pending(tx, pk, body)
-        if action["proposed_by"] != actor.sub and member["role"] not in MANAGERS:
+        if actor.sub not in (action["proposed_by"], action.get("initiated_by")) and member["role"] not in MANAGERS:
             raise PlatformError("You can cancel only your own pending actions.", 403, "forbidden")
         return self._finish_pending(tx, pk, actor, action, "cancelled", text(body.get("reason"), "Cancellation reason", 5, 500))
 
@@ -532,3 +550,15 @@ class PlatformService:
         if action["expires_at"] > time.time():
             raise PlatformError("This action has not expired.", 409, "invalid_state")
         return self._finish_pending(tx, pk, actor, action, "expired", "The approval window elapsed.")
+
+    def _agent_checks(self, tx, pk, action, *, held=False):
+        if action.get("agent_id"):
+            raise PlatformError("Agent services are not configured.", 503, "agent_unavailable")
+        return []
+
+    def _agent_review(self, tx, pk, action):
+        return False
+
+    def _agent_meter(self, tx, pk, action, date, field, delta):
+        if action.get("agent_id"):
+            raise PlatformError("Agent services are not configured.", 503, "agent_unavailable")

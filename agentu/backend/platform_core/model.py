@@ -15,6 +15,9 @@ class Actor:
     sub: str
     email: str
     verified: bool = False
+    kind: str = "human"
+    credential_id: str | None = None
+    initiated_by: str | None = None
 
 
 def now():

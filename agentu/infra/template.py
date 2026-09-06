@@ -13,6 +13,10 @@ def template():
     def add(name, kind, props, **extra):
         resources[name] = {"Type": kind, "Properties": props, **extra}
 
+    platform_access = {"Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query", "dynamodb:ConditionCheckItem"], "Resource": A("PlatformRecords")}
+    work_delete = {"Effect": "Allow", "Action": "dynamodb:DeleteItem", "Resource": A("PlatformRecords"),
+                   "Condition": {"ForAllValues:StringEquals": {"dynamodb:LeadingKeys": ["WORK#platform"]}}}
+
     add("Records", "AWS::DynamoDB::Table", {
         "TableName": S("agentu-${Stage}-records"), "BillingMode": "PAY_PER_REQUEST",
         "AttributeDefinitions": [{"AttributeName": "pk", "AttributeType": "S"}],
@@ -46,14 +50,43 @@ def template():
         "AssumeRolePolicyDocument": {"Version": "2012-10-17", "Statement": [{"Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]},
         "Policies": [{"PolicyName": "DemoStateAndLogs", "PolicyDocument": {"Version": "2012-10-17", "Statement": [
             {"Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:PutItem"], "Resource": A("Records")},
-            {"Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query", "dynamodb:ConditionCheckItem"], "Resource": A("PlatformRecords")},
+            platform_access, work_delete,
             {"Effect": "Allow", "Action": ["logs:CreateLogStream", "logs:PutLogEvents"], "Resource": A("FunctionLogs")}]}}]})
     add("ApiFunction", "AWS::Lambda::Function", {
         "FunctionName": S("agentu-${Stage}-api"), "Runtime": "python3.13", "Handler": "handler.handler",
         "Architectures": ["arm64"], "MemorySize": 256, "Timeout": 15, "Role": A("ApiRole"),
         "Code": {"S3Bucket": R("ArtifactBucket"), "S3Key": R("ArtifactKey")},
-        "Environment": {"Variables": {"TABLE_NAME": R("Records"), "PLATFORM_TABLE_NAME": R("PlatformRecords"), "STAGE": R("Stage")}},
+        "Environment": {"Variables": {"TABLE_NAME": R("Records"), "PLATFORM_TABLE_NAME": R("PlatformRecords"), "STAGE": R("Stage"), "BEDROCK_MODEL_ARN": R("BedrockModelArn")}},
         "Tags": [{"Key": "Project", "Value": "Agentu"}, {"Key": "Environment", "Value": R("Stage")}]}, DependsOn="FunctionLogs")
+    add("WorkerLogs", "AWS::Logs::LogGroup", {"LogGroupName": S("/aws/lambda/agentu-${Stage}-worker"), "RetentionInDays": 30})
+    add("WorkerRole", "AWS::IAM::Role", {
+        "RoleName": S("agentu-${Stage}-worker"),
+        "AssumeRolePolicyDocument": {"Version": "2012-10-17", "Statement": [{"Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]},
+        "Policies": [{"PolicyName": "AgentWorkAndLogs", "PolicyDocument": {"Version": "2012-10-17", "Statement": [
+            platform_access, work_delete,
+            {"Effect": "Allow", "Action": ["logs:CreateLogStream", "logs:PutLogEvents"], "Resource": A("WorkerLogs")},
+            {"Fn::If": ["EnableBedrock", {"Effect": "Allow", "Action": "bedrock:InvokeModel", "Resource": R("BedrockModelArn")}, R("AWS::NoValue")]}]}}]})
+    add("WorkerFunction", "AWS::Lambda::Function", {
+        "FunctionName": S("agentu-${Stage}-worker"), "Runtime": "python3.13", "Handler": "worker.handler",
+        "Architectures": ["arm64"], "MemorySize": 256, "Timeout": 120, "ReservedConcurrentExecutions": 1, "Role": A("WorkerRole"),
+        "Code": {"S3Bucket": R("ArtifactBucket"), "S3Key": R("ArtifactKey")},
+        "Environment": {"Variables": {"PLATFORM_TABLE_NAME": R("PlatformRecords"), "STAGE": R("Stage"), "BEDROCK_MODEL_ARN": R("BedrockModelArn")}},
+        "Tags": [{"Key": "Project", "Value": "Agentu"}, {"Key": "Environment", "Value": R("Stage")}]}, DependsOn="WorkerLogs")
+    add("WorkerSchedule", "AWS::Events::Rule", {
+        "Name": S("agentu-${Stage}-worker"), "ScheduleExpression": "rate(1 minute)", "State": "ENABLED",
+        "Targets": [{"Id": "AgentuWorker", "Arn": A("WorkerFunction"), "Input": '{"source":"agentu.worker"}',
+                     "RetryPolicy": {"MaximumEventAgeInSeconds": 300, "MaximumRetryAttempts": 2}}]})
+    add("WorkerPermission", "AWS::Lambda::Permission", {
+        "Action": "lambda:InvokeFunction", "FunctionName": R("WorkerFunction"), "Principal": "events.amazonaws.com", "SourceArn": A("WorkerSchedule")})
+    add("WorkerInvokeConfig", "AWS::Lambda::EventInvokeConfig", {"FunctionName": R("WorkerFunction"), "Qualifier": "$LATEST", "MaximumEventAgeInSeconds": 300, "MaximumRetryAttempts": 0})
+    add("WorkerErrors", "AWS::CloudWatch::Alarm", {"AlarmName": S("agentu-${Stage}-worker-errors"), "AlarmDescription": "Worker invocation failed; durable jobs are retained for retry.", "Namespace": "AWS/Lambda", "MetricName": "Errors", "Dimensions": [{"Name": "FunctionName", "Value": R("WorkerFunction")}], "Statistic": "Sum", "Period": 300, "EvaluationPeriods": 1, "Threshold": 1, "ComparisonOperator": "GreaterThanOrEqualToThreshold", "TreatMissingData": "notBreaching"})
+    for metric in ("FailedRuns", "ExpiryRetries", "Heartbeats"):
+        heartbeat = metric == "Heartbeats"
+        add("Worker" + metric, "AWS::CloudWatch::Alarm", {
+            "AlarmName": S("agentu-${Stage}-worker-" + metric.lower()), "Namespace": "Agentu/Worker", "MetricName": metric,
+            "Dimensions": [{"Name": "Stage", "Value": R("Stage")}], "Statistic": "Sum", "Period": 300, "EvaluationPeriods": 1,
+            "Threshold": 1, "ComparisonOperator": "LessThanThreshold" if heartbeat else "GreaterThanOrEqualToThreshold",
+            "TreatMissingData": "breaching" if heartbeat else "notBreaching"})
     add("UserPool", "AWS::Cognito::UserPool", {
         "UserPoolName": S("agentu-${Stage}-presenters"),
         "AdminCreateUserConfig": {"AllowAdminCreateUserOnly": True},
@@ -76,9 +109,9 @@ def template():
     add("JwtAuthorizer", "AWS::ApiGatewayV2::Authorizer", {
         "ApiId": R("HttpApi"), "Name": "PresenterSignIn", "AuthorizerType": "JWT", "IdentitySource": ["$request.header.Authorization"],
         "JwtConfiguration": {"Audience": [R("UserPoolClient")], "Issuer": S("https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}")}})
-    for name, route in {"State": "GET /api/state", "Actions": "POST /api/actions", "Export": "GET /api/export", "Health": "GET /api/health", "Platform": "ANY /api/platform/{proxy+}"}.items():
+    for name, route in {"State": "GET /api/state", "Actions": "POST /api/actions", "Export": "GET /api/export", "Health": "GET /api/health", "Platform": "ANY /api/platform/{proxy+}", "AgentProposal": "POST /api/agent/proposals"}.items():
         props = {"ApiId": R("HttpApi"), "RouteKey": route, "Target": {"Fn::Join": ["", ["integrations/", R("ApiIntegration")]]}}
-        if name != "Health":
+        if name not in ("Health", "AgentProposal"):
             props.update(AuthorizationType="JWT", AuthorizerId=R("JwtAuthorizer"), AuthorizationScopes=["openid"])
         add(name + "Route", "AWS::ApiGatewayV2::Route", props)
     add("ApiStage", "AWS::ApiGatewayV2::Stage", {
@@ -115,14 +148,17 @@ def template():
         {"Effect": "Allow", "Principal": {"Service": "cloudfront.amazonaws.com"}, "Action": "s3:GetObject", "Resource": S("${WebBucket.Arn}/*"), "Condition": {"StringEquals": {"AWS:SourceArn": S("arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${Distribution}")}}},
         {"Effect": "Deny", "Principal": "*", "Action": "s3:*", "Resource": [A("WebBucket"), S("${WebBucket.Arn}/*")], "Condition": {"Bool": {"aws:SecureTransport": "false"}}}]}})
     add("ApiErrors", "AWS::CloudWatch::Alarm", {"AlarmName": S("agentu-${Stage}-api-errors"), "AlarmDescription": "Demo API errors; inspect CloudWatch logs.", "Namespace": "AWS/Lambda", "MetricName": "Errors", "Dimensions": [{"Name": "FunctionName", "Value": R("ApiFunction")}], "Statistic": "Sum", "Period": 300, "EvaluationPeriods": 1, "Threshold": 3, "ComparisonOperator": "GreaterThanOrEqualToThreshold", "TreatMissingData": "notBreaching"})
-    return {"AWSTemplateFormatVersion": "2010-09-09", "Description": "Agentu isolated founder demonstration. Simulated funds only.",
-            "Parameters": {"Stage": {"Type": "String", "AllowedValues": ["sandbox", "demo"]}, "ArtifactBucket": {"Type": "String"}, "ArtifactKey": {"Type": "String"}},
+    return {"AWSTemplateFormatVersion": "2010-09-09", "Description": "Agentu governed operations and agent runtime. Simulated funds only.",
+            "Parameters": {"Stage": {"Type": "String", "AllowedValues": ["sandbox", "demo"]}, "ArtifactBucket": {"Type": "String"}, "ArtifactKey": {"Type": "String"},
+                           "BedrockModelArn": {"Type": "String", "Default": "", "AllowedPattern": "^$|^arn:aws:bedrock:eu-west-2::foundation-model/[a-z0-9][a-z0-9.:-]{1,200}$", "Description": "Optional approved London foundation model ARN; empty disables Bedrock."}},
+            "Conditions": {"EnableBedrock": {"Fn::Not": [{"Fn::Equals": [R("BedrockModelArn"), ""]}]}},
             "Resources": resources, "Outputs": {
                 "WebsiteUrl": {"Value": S("https://${Distribution.DomainName}/agentu/")}, "DemoUrl": {"Value": S("https://${Distribution.DomainName}/agentu/demo/")}, "AppUrl": {"Value": S("https://${Distribution.DomainName}/agentu/app/")},
                 "DistributionId": {"Value": R("Distribution")}, "WebBucket": {"Value": R("WebBucket")},
                 "UserPoolId": {"Value": R("UserPool")}, "UserPoolClientId": {"Value": R("UserPoolClient")},
                 "AuthDomain": {"Value": S("https://agentu-${Stage}-${AWS::AccountId}.auth.${AWS::Region}.amazoncognito.com")},
-                "ApiId": {"Value": R("HttpApi")}, "FunctionName": {"Value": R("ApiFunction")}, "RecordsTable": {"Value": R("Records")}, "PlatformTable": {"Value": R("PlatformRecords")}}}
+                "ApiId": {"Value": R("HttpApi")}, "FunctionName": {"Value": R("ApiFunction")}, "WorkerFunctionName": {"Value": R("WorkerFunction")},
+                "RecordsTable": {"Value": R("Records")}, "PlatformTable": {"Value": R("PlatformRecords")}, "BedrockModelArn": {"Value": R("BedrockModelArn")}}}
 
 
 if __name__ == "__main__":

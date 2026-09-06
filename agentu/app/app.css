@@ -709,3 +709,57 @@ dialog::backdrop {
     font-size: 30px;
   }
 }
+
+.capability-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.capability-strip p {
+  margin-bottom: 0;
+}
+.choice-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 0 0 20px;
+  border: 1px solid var(--line);
+}
+.choice-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.choice-group input {
+  width: auto;
+}
+fieldset[hidden] {
+  display: none;
+}
+.agent-card header > div,
+.agent-card .grid > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.badge.queued,
+.badge.running {
+  background: #fff2cf;
+  color: #795100;
+}
+.badge.completed,
+.badge.no_action {
+  background: #e4f2e6;
+  color: #286439;
+}
+.badge.failed,
+.badge.revoked {
+  background: #fae5e0;
+  color: #993c2e;
+}
+@media (max-width: 760px) {
+  .capability-strip {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}

@@ -27,7 +27,7 @@ jobs:
           node-version: '22'
       - run: python -m pip install -r agentu/requirements-tools.txt
       - run: python -m unittest discover -s agentu/tests -v
-      - run: node --check agentu/site.js && node --check agentu/demo/app.js && node --check agentu/demo/auth.js && node --check agentu/app/app.js
+      - run: node --check agentu/site.js && node --check agentu/demo/app.js && node --check agentu/demo/auth.js && node --check agentu/app/app.js && node --check agentu/app/agents.js
       - run: python agentu/scripts/build.py
       - run: cfn-lint .build/template.json
       - uses: aws-actions/configure-aws-credentials@v4

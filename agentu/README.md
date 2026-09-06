@@ -33,6 +33,7 @@ node --check agentu/site.js
 node --check agentu/demo/app.js
 node --check agentu/demo/auth.js
 node --check agentu/app/app.js
+node --check agentu/app/agents.js
 ```
 
 The build allowlists public assets and the Lambda modules. The local development authentication adapter and local databases are excluded from the Lambda package. Credentials and development records are never synchronised to a web bucket.
@@ -41,7 +42,7 @@ The build allowlists public assets and the Lambda modules. The local development
 
 Open `/agentu/app/` on the same local server, or run `agentu/scripts/launch-demo.ps1 -View app` on Windows. Register a development identity, create an institution, add accounts and fund the sandbox. Invite a second identity using its development email and copy the invitation link. Sign in as that second identity to accept the invitation and review a transfer. No email is sent automatically.
 
-The application includes institution-scoped roles, versioned policies with independent publication, money reservations, approvals, cancellation, expiry, a balanced journal and hash-linked audit events. Every command uses a persistent idempotency record and checks record versions at commit, including role, policy and balance dependencies. Role selection in request JSON has no authority.
+The application includes governed agent mandates, durable runs, automatic reservation expiry, institution-scoped roles, versioned policies with independent publication, money reservations, approvals, cancellation, expiry, a balanced journal and hash-linked audit events. Every command uses a persistent idempotency record and checks record versions at commit, including role, policy and balance dependencies. Role selection in request JSON has no authority.
 
 Local accounts and institution records use SQLite in ignored `.local-platform/`. Local email ownership is assumed strictly for development. Hosted identities use Cognito with verified email; each invited person must also be provisioned in the stage's Cognito pool before using an institution invitation. The hosted database is a separate DynamoDB table with point-in-time recovery and no automatic TTL for platform records.
 
@@ -60,4 +61,6 @@ The enquiry form prepares an email to `frankie@w3c.com`. The visitor reviews and
 
 ## Evidence boundary
 
-The audit records form a SHA-256 hash chain. Verification detects inconsistent contents, ordering or links. It is **not** independently anchored, externally signed or immutable against a privileged administrator. Financial operations use simulated funds and internal ledger postings. Bank execution, autonomous agents, reversals, reconciliation, scheduled expiry, evidence signing, production infrastructure and operational assurance remain outstanding in the full completion record.
+The audit records form a SHA-256 hash chain. Verification detects inconsistent contents, ordering or links. It is **not** independently anchored, externally signed or immutable against a privileged administrator. Financial operations use simulated funds and internal ledger postings. Real model invocation, bank execution, reversals, reconciliation, evidence signing, production infrastructure and operational assurance remain outstanding in the full completion record.
+
+Agent operation, credential integration, worker behavior and model configuration are documented in [Governed agents](docs/agents.md). The treasury rule runs locally; the Bedrock adapter requires a verified business AWS account and model before it can be exercised live.

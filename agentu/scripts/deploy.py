@@ -49,7 +49,15 @@ def artifact_bucket(session):
     return name
 
 
-def plan(session, stage):
+def model_parameter(model_arn, existing_parameters, updating):
+    if model_arn is not None:
+        return {"ParameterKey": "BedrockModelArn", "ParameterValue": model_arn}
+    if updating and any(p["ParameterKey"] == "BedrockModelArn" for p in existing_parameters):
+        return {"ParameterKey": "BedrockModelArn", "UsePreviousValue": True}
+    return {"ParameterKey": "BedrockModelArn", "ParameterValue": ""}
+
+
+def plan(session, stage, model_arn=None):
     manifest = build()
     bucket = artifact_bucket(session)
     key = f"{stage}/lambda/{manifest['lambda_sha256']}.zip"
@@ -58,8 +66,11 @@ def plan(session, stage):
     cf = session.client("cloudformation")
     stack = "agentu-" + stage
     kind = "CREATE"
+    existing_parameters = []
     try:
-        status = cf.describe_stacks(StackName=stack)["Stacks"][0]["StackStatus"]
+        existing = cf.describe_stacks(StackName=stack)["Stacks"][0]
+        status = existing["StackStatus"]
+        existing_parameters = existing.get("Parameters", [])
         kind = "CREATE" if status == "REVIEW_IN_PROGRESS" else "UPDATE"
     except ClientError as exc:
         if "does not exist" not in str(exc):
@@ -67,9 +78,9 @@ def plan(session, stage):
     name = "agentu-" + time.strftime("%Y%m%d-%H%M%S")
     cf.validate_template(TemplateBody=(OUT / "template.json").read_text())
     cf.create_change_set(StackName=stack, ChangeSetName=name, ChangeSetType=kind,
-        Description="Agentu founder demonstration; simulated funds only",
+        Description="Agentu governed operations and agent runtime; simulated funds only",
         TemplateBody=(OUT / "template.json").read_text(), Capabilities=["CAPABILITY_NAMED_IAM"],
-        Parameters=[{"ParameterKey": "Stage", "ParameterValue": stage}, {"ParameterKey": "ArtifactBucket", "ParameterValue": bucket}, {"ParameterKey": "ArtifactKey", "ParameterValue": key}],
+        Parameters=[{"ParameterKey": "Stage", "ParameterValue": stage}, {"ParameterKey": "ArtifactBucket", "ParameterValue": bucket}, {"ParameterKey": "ArtifactKey", "ParameterValue": key}, model_parameter(model_arn, existing_parameters, kind == "UPDATE")],
         Tags=[{"Key": "Project", "Value": "Agentu"}, {"Key": "Environment", "Value": stage}, {"Key": "Owner", "Value": "W3C"}])
     # Keep this bounded so callers can continue preparing the walkthrough while AWS works.
     print(json.dumps({"stack": stack, "change_set": name, "type": kind, "next": "inspect status then apply this named change set"}), flush=True)
@@ -86,10 +97,13 @@ def publish(session, stage):
     if stack["StackStatus"] not in ("CREATE_COMPLETE", "UPDATE_COMPLETE"):
         raise SystemExit("The AWS stack must finish successfully before uploading the website.")
     manifest = build()
-    configuration = session.client("lambda").get_function_configuration(FunctionName=values["FunctionName"])
-    deployed_hash = base64.b64decode(configuration["CodeSha256"]).hex()
-    if deployed_hash != manifest["lambda_sha256"]:
-        raise SystemExit("Backend code differs from this build. Deploy the matching Lambda package before publishing the website.")
+    if "WorkerFunctionName" not in values:
+        raise SystemExit("Apply the infrastructure change set containing the worker before publishing.")
+    for key in ("WorkerFunctionName", "FunctionName"):
+        configuration = session.client("lambda").get_function_configuration(FunctionName=values[key])
+        deployed_hash = base64.b64decode(configuration["CodeSha256"]).hex()
+        if deployed_hash != manifest["lambda_sha256"] or configuration.get("LastUpdateStatus") != "Successful":
+            raise SystemExit("Backend code differs from this build or is still updating. Release the matching API and worker before publishing.")
     config = {"mode": "hosted", "environment": "Founder demo" if stage == "demo" else "Sandbox",
               "apiBase": "", "clientId": values["UserPoolClientId"], "authDomain": values["AuthDomain"],
               "redirectUri": values["DemoUrl"], "logoutUri": values["WebsiteUrl"]}
@@ -115,13 +129,14 @@ def main():
     parser.add_argument("--profile")
     parser.add_argument("--region", default=REGION)
     parser.add_argument("--change-set")
+    parser.add_argument("--bedrock-model-arn", help="Optional approved London foundation model ARN. Omit to preserve the existing choice.")
     args = parser.parse_args()
     session = clients(args.profile, args.region)
     cf = session.client("cloudformation")
     if args.command == "identity":
         return
     if args.command == "plan":
-        plan(session, args.stage)
+        plan(session, args.stage, args.bedrock_model_arn)
     elif args.command == "apply":
         if not args.change_set:
             raise SystemExit("Specify the reviewed --change-set name.")
