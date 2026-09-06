@@ -48,7 +48,7 @@ python agentu/scripts/setup_release_role.py --stage sandbox --apply
 
 The first command prints the concrete trust and permissions. The applied role allows describing its own stack, updating its Lambda code, writing its own public website prefix and invalidating its own distribution. It cannot manage IAM, modify financial records directly, or create infrastructure.
 
-Create GitHub environments `agentu-sandbox` and `agentu-demo`. Restrict demo deployments to `main`, and sandbox deployments to `main` / `codex/agentu-*`. Set the non-secret environment variable `AWS_RELEASE_ROLE_ARN` to the corresponding output. The trust policy binds short-lived credentials to the exact W3C repository and named environment. No long-lived AWS secret is needed.
+GitHub environments `agentu-sandbox` and `agentu-demo` have been created. Demo deployments are restricted to `main`; sandbox deployments allow `main` / `codex/agentu-*`. Once the AWS roles exist, set the non-secret environment variable `AWS_RELEASE_ROLE_ARN` to the corresponding output. The trust policy binds short-lived credentials to the exact W3C repository and named environment. No long-lived AWS secret is needed.
 
 The **Release Agentu** workflow runs tests and template validation before assuming the environment’s release role. It is manually dispatched. The **Agentu checks** workflow runs on relevant branches and pull requests.
 

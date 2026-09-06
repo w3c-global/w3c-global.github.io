@@ -13,6 +13,8 @@
 - Allowlisted static build and Lambda package.
 - Infrastructure templates for separate AWS sandbox and demo stacks in the designated account.
 - CI checks, OIDC release workflow, narrow release-role setup, and deployment/rollback instructions.
+- Saved in W3C draft pull request #1. Both GitHub CI runs passed (20 tests, JavaScript syntax and CloudFormation validation).
+- GitHub release environments `agentu-sandbox` and `agentu-demo` created with branch restrictions. AWS role attachment remains pending.
 - Founder walkthrough for Tuesday 8 September.
 
 ## Not yet verified / blocked by account access
