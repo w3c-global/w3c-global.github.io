@@ -19,7 +19,7 @@ export async function signIn(config) {
     response_type: "code",
     client_id: config.clientId,
     redirect_uri: config.redirectUri,
-    scope: "openid email",
+    scope: "openid email aws.cognito.signin.user.admin",
     state,
     code_challenge: challenge,
     code_challenge_method: "S256",

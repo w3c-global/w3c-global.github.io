@@ -25,13 +25,15 @@ python agentu/scripts/deploy.py publish --stage sandbox
 
 `plan` creates or secures an Agentu-only deployment-artifact bucket, uploads the package and prepares an unexecuted CloudFormation change set. It is not read-only. Inspect the named change set before applying. Repeat with `--stage demo` after the sandbox succeeds.
 
-The template manages website storage, CloudFront, HTTPS, Cognito and exact callback URLs, HTTP API/JWT authentication, Lambda, DynamoDB, retention, logging and an error alarm. Outputs supply the actual website and demo URLs. No custom domain is assumed.
+The template manages website storage, CloudFront, HTTPS, Cognito and exact callback URLs, HTTP API/JWT authentication, Lambda, separate demo and platform DynamoDB tables, retention, logging and an error alarm. Outputs supply website, demo and application URLs. The platform table has no TTL. No custom domain is assumed.
 
 If the account has restricted quotas, request only the permissions or quota changes required by the named Agentu resources. Do not deploy into a different account as a workaround.
 
 ## Users and cost monitoring
 
 Create an invited presenter in the environment’s Cognito pool, using the business email agreed by the user. Deliver onboarding only to an explicitly authorised recipient. Do not publish passwords or copy them into task notes. Configure MFA and the recovery process appropriate to the invited users before broader access.
+
+The operational application also requires these Cognito identities. Its email-bound institution invitations assign roles after authentication; they do not automatically provision user-pool identities or send messages. Use at least two separate identities when checking segregation of duties. The OAuth client includes the `aws.cognito.signin.user.admin` scope for token-authenticated GetUser verification and callbacks for both `/agentu/demo/` and `/agentu/app/`.
 
 Before declaring cloud readiness, configure and verify the account’s budget and notification recipient. No budget threshold or paid capacity reservation is silently created by these templates. API throttling reduces request spikes; it is not a hard spending cap. Check the [AWS pricing calculator](https://calculator.aws/) for the selected region and current service rates.
 
@@ -64,6 +66,9 @@ The **Release Agentu** workflow runs tests and template validation before assumi
 8. Confirm private S3 access is denied and the CloudFront security headers are present.
 9. Validate the GitHub release role and run a sandbox release; record the exact deployed revision.
 10. Verify cost notifications, operational monitoring and local rehearsal recovery.
+11. Sign into the operations application, create an institution and accounts, fund the sandbox and invite a second provisioned identity.
+12. Verify cross-institution denial, independent policy publication, role suspension, a pending transfer, independent approval, balanced journal entries and export verification through the deployed API.
+13. Run concurrent requests against the deployed DynamoDB adapter and record transaction-conflict/idempotency outcomes. Local storage tests and mocked AWS request checks do not substitute for this.
 
 ## Rollback and recovery
 

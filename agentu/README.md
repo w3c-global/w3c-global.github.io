@@ -1,6 +1,6 @@
 # Agentu
 
-Agentu is a **pre-incorporation venture** exploring financial controls for AI. This project contains the website, a working demonstration, and infrastructure for separate AWS sandbox and founder-demo environments. It is not a production banking platform.
+Agentu is a **pre-incorporation venture** building financial controls for AI. This project contains the website, a guided demonstration and an institution operations application with a durable backend. The full product is under construction; deployed production readiness has not been established.
 
 ## Ownership and scope
 
@@ -32,9 +32,20 @@ cfn-lint .build/template.json
 node --check agentu/site.js
 node --check agentu/demo/app.js
 node --check agentu/demo/auth.js
+node --check agentu/app/app.js
 ```
 
-The build allowlists public assets and packages only three backend files into Lambda. It never synchronises the repository, credentials or local demo records to a web bucket.
+The build allowlists public assets and the Lambda modules. The local development authentication adapter and local databases are excluded from the Lambda package. Credentials and development records are never synchronised to a web bucket.
+
+## Operations application
+
+Open `/agentu/app/` on the same local server, or run `agentu/scripts/launch-demo.ps1 -View app` on Windows. Register a development identity, create an institution, add accounts and fund the sandbox. Invite a second identity using its development email and copy the invitation link. Sign in as that second identity to accept the invitation and review a transfer. No email is sent automatically.
+
+The application includes institution-scoped roles, versioned policies with independent publication, money reservations, approvals, cancellation, expiry, a balanced journal and hash-linked audit events. Every command uses a persistent idempotency record and checks record versions at commit, including role, policy and balance dependencies. Role selection in request JSON has no authority.
+
+Local accounts and institution records use SQLite in ignored `.local-platform/`. Local email ownership is assumed strictly for development. Hosted identities use Cognito with verified email; each invited person must also be provisioned in the stage's Cognito pool before using an institution invitation. The hosted database is a separate DynamoDB table with point-in-time recovery and no automatic TTL for platform records.
+
+See [Platform operation and API guide](docs/platform-operations.md) and [full completion record](docs/platform-scope.md).
 
 ## Readiness and deployment
 
@@ -49,4 +60,4 @@ The enquiry form prepares an email to `frankie@w3c.com`. The visitor reviews and
 
 ## Evidence boundary
 
-The audit records form a SHA-256 hash chain. Verification detects inconsistent contents, ordering or links. It is **not** independently anchored, externally signed or immutable against a privileged administrator. Money movements and agent requests are simulated. Production segregation of duties, banking adapters, model governance, reconciliation and external assurance remain future work.
+The audit records form a SHA-256 hash chain. Verification detects inconsistent contents, ordering or links. It is **not** independently anchored, externally signed or immutable against a privileged administrator. Financial operations use simulated funds and internal ledger postings. Bank execution, autonomous agents, reversals, reconciliation, scheduled expiry, evidence signing, production infrastructure and operational assurance remain outstanding in the full completion record.

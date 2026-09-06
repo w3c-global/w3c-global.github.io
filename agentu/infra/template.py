@@ -31,6 +31,14 @@ def template():
         "LifecycleConfiguration": {"Rules": [{"Id": "OldVersions", "Status": "Enabled", "NoncurrentVersionExpiration": {"NoncurrentDays": 30}}]},
         "Tags": [{"Key": "Project", "Value": "Agentu"}, {"Key": "Environment", "Value": R("Stage")}]},
         DeletionPolicy="Retain", UpdateReplacePolicy="Retain")
+    add("PlatformRecords", "AWS::DynamoDB::Table", {
+        "TableName": S("agentu-${Stage}-platform"), "BillingMode": "PAY_PER_REQUEST",
+        "AttributeDefinitions": [{"AttributeName": "pk", "AttributeType": "S"}, {"AttributeName": "sk", "AttributeType": "S"}],
+        "KeySchema": [{"AttributeName": "pk", "KeyType": "HASH"}, {"AttributeName": "sk", "KeyType": "RANGE"}],
+        "SSESpecification": {"SSEEnabled": True},
+        "PointInTimeRecoverySpecification": {"PointInTimeRecoveryEnabled": True},
+        "Tags": [{"Key": "Project", "Value": "Agentu"}, {"Key": "Environment", "Value": R("Stage")}]},
+        DeletionPolicy="Retain", UpdateReplacePolicy="Retain")
     add("ApiLogs", "AWS::Logs::LogGroup", {"LogGroupName": S("/agentu/${Stage}/api"), "RetentionInDays": 14})
     add("FunctionLogs", "AWS::Logs::LogGroup", {"LogGroupName": S("/aws/lambda/agentu-${Stage}-api"), "RetentionInDays": 14})
     add("ApiRole", "AWS::IAM::Role", {
@@ -38,12 +46,13 @@ def template():
         "AssumeRolePolicyDocument": {"Version": "2012-10-17", "Statement": [{"Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]},
         "Policies": [{"PolicyName": "DemoStateAndLogs", "PolicyDocument": {"Version": "2012-10-17", "Statement": [
             {"Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:PutItem"], "Resource": A("Records")},
+            {"Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query", "dynamodb:ConditionCheckItem"], "Resource": A("PlatformRecords")},
             {"Effect": "Allow", "Action": ["logs:CreateLogStream", "logs:PutLogEvents"], "Resource": A("FunctionLogs")}]}}]})
     add("ApiFunction", "AWS::Lambda::Function", {
         "FunctionName": S("agentu-${Stage}-api"), "Runtime": "python3.13", "Handler": "handler.handler",
         "Architectures": ["arm64"], "MemorySize": 256, "Timeout": 15, "Role": A("ApiRole"),
         "Code": {"S3Bucket": R("ArtifactBucket"), "S3Key": R("ArtifactKey")},
-        "Environment": {"Variables": {"TABLE_NAME": R("Records"), "STAGE": R("Stage")}},
+        "Environment": {"Variables": {"TABLE_NAME": R("Records"), "PLATFORM_TABLE_NAME": R("PlatformRecords"), "STAGE": R("Stage")}},
         "Tags": [{"Key": "Project", "Value": "Agentu"}, {"Key": "Environment", "Value": R("Stage")}]}, DependsOn="FunctionLogs")
     add("UserPool", "AWS::Cognito::UserPool", {
         "UserPoolName": S("agentu-${Stage}-presenters"),
@@ -56,18 +65,18 @@ def template():
     add("UserPoolDomain", "AWS::Cognito::UserPoolDomain", {"Domain": S("agentu-${Stage}-${AWS::AccountId}"), "UserPoolId": R("UserPool")})
     add("UserPoolClient", "AWS::Cognito::UserPoolClient", {
         "ClientName": S("agentu-${Stage}-browser"), "UserPoolId": R("UserPool"), "GenerateSecret": False,
-        "AllowedOAuthFlowsUserPoolClient": True, "AllowedOAuthFlows": ["code"], "AllowedOAuthScopes": ["openid", "email"],
+        "AllowedOAuthFlowsUserPoolClient": True, "AllowedOAuthFlows": ["code"], "AllowedOAuthScopes": ["openid", "email", "aws.cognito.signin.user.admin"],
         "SupportedIdentityProviders": ["COGNITO"], "PreventUserExistenceErrors": "ENABLED", "EnableTokenRevocation": True,
         "AccessTokenValidity": 60, "IdTokenValidity": 60, "RefreshTokenValidity": 1,
         "TokenValidityUnits": {"AccessToken": "minutes", "IdToken": "minutes", "RefreshToken": "days"},
-        "CallbackURLs": [S("https://${Distribution.DomainName}/agentu/demo/")], "LogoutURLs": [S("https://${Distribution.DomainName}/agentu/")]})
+        "CallbackURLs": [S("https://${Distribution.DomainName}/agentu/demo/"), S("https://${Distribution.DomainName}/agentu/app/")], "LogoutURLs": [S("https://${Distribution.DomainName}/agentu/")]})
     add("HttpApi", "AWS::ApiGatewayV2::Api", {"Name": S("agentu-${Stage}"), "ProtocolType": "HTTP"})
     add("ApiIntegration", "AWS::ApiGatewayV2::Integration", {
         "ApiId": R("HttpApi"), "IntegrationType": "AWS_PROXY", "IntegrationUri": A("ApiFunction"), "PayloadFormatVersion": "2.0", "TimeoutInMillis": 15000})
     add("JwtAuthorizer", "AWS::ApiGatewayV2::Authorizer", {
         "ApiId": R("HttpApi"), "Name": "PresenterSignIn", "AuthorizerType": "JWT", "IdentitySource": ["$request.header.Authorization"],
         "JwtConfiguration": {"Audience": [R("UserPoolClient")], "Issuer": S("https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}")}})
-    for name, route in {"State": "GET /api/state", "Actions": "POST /api/actions", "Export": "GET /api/export", "Health": "GET /api/health"}.items():
+    for name, route in {"State": "GET /api/state", "Actions": "POST /api/actions", "Export": "GET /api/export", "Health": "GET /api/health", "Platform": "ANY /api/platform/{proxy+}"}.items():
         props = {"ApiId": R("HttpApi"), "RouteKey": route, "Target": {"Fn::Join": ["", ["integrations/", R("ApiIntegration")]]}}
         if name != "Health":
             props.update(AuthorizationType="JWT", AuthorizerId=R("JwtAuthorizer"), AuthorizationScopes=["openid"])
@@ -100,7 +109,7 @@ def template():
             "FunctionAssociations": [{"EventType": "viewer-request", "FunctionARN": A("DirectoryIndex", "FunctionARN")}]},
         "CacheBehaviors": [{"PathPattern": "/api/*", "TargetOriginId": "api", "ViewerProtocolPolicy": "https-only", "AllowedMethods": ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"],
             "CachePolicyId": "413f160f-8c3f-4f01-bc5b-3c7054ab4058", "OriginRequestPolicyId": "b689b0a8-53d0-40ab-baf2-68738e2966ac", "ResponseHeadersPolicyId": R("SecurityHeaders"), "Compress": True},
-            {"PathPattern": "/agentu/demo/config.json", "TargetOriginId": "website", "ViewerProtocolPolicy": "redirect-to-https", "AllowedMethods": ["GET", "HEAD"], "CachePolicyId": "413f160f-8c3f-4f01-bc5b-3c7054ab4058", "ResponseHeadersPolicyId": R("SecurityHeaders")}],
+            {"PathPattern": "/agentu/*/config.json", "TargetOriginId": "website", "ViewerProtocolPolicy": "redirect-to-https", "AllowedMethods": ["GET", "HEAD"], "CachePolicyId": "413f160f-8c3f-4f01-bc5b-3c7054ab4058", "ResponseHeadersPolicyId": R("SecurityHeaders")}],
         "ViewerCertificate": {"CloudFrontDefaultCertificate": True}}, "Tags": [{"Key": "Project", "Value": "Agentu"}, {"Key": "Environment", "Value": R("Stage")}]})
     add("WebBucketPolicy", "AWS::S3::BucketPolicy", {"Bucket": R("WebBucket"), "PolicyDocument": {"Version": "2012-10-17", "Statement": [
         {"Effect": "Allow", "Principal": {"Service": "cloudfront.amazonaws.com"}, "Action": "s3:GetObject", "Resource": S("${WebBucket.Arn}/*"), "Condition": {"StringEquals": {"AWS:SourceArn": S("arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${Distribution}")}}},
@@ -109,11 +118,11 @@ def template():
     return {"AWSTemplateFormatVersion": "2010-09-09", "Description": "Agentu isolated founder demonstration. Simulated funds only.",
             "Parameters": {"Stage": {"Type": "String", "AllowedValues": ["sandbox", "demo"]}, "ArtifactBucket": {"Type": "String"}, "ArtifactKey": {"Type": "String"}},
             "Resources": resources, "Outputs": {
-                "WebsiteUrl": {"Value": S("https://${Distribution.DomainName}/agentu/")}, "DemoUrl": {"Value": S("https://${Distribution.DomainName}/agentu/demo/")},
+                "WebsiteUrl": {"Value": S("https://${Distribution.DomainName}/agentu/")}, "DemoUrl": {"Value": S("https://${Distribution.DomainName}/agentu/demo/")}, "AppUrl": {"Value": S("https://${Distribution.DomainName}/agentu/app/")},
                 "DistributionId": {"Value": R("Distribution")}, "WebBucket": {"Value": R("WebBucket")},
                 "UserPoolId": {"Value": R("UserPool")}, "UserPoolClientId": {"Value": R("UserPoolClient")},
                 "AuthDomain": {"Value": S("https://agentu-${Stage}-${AWS::AccountId}.auth.${AWS::Region}.amazoncognito.com")},
-                "ApiId": {"Value": R("HttpApi")}, "FunctionName": {"Value": R("ApiFunction")}, "RecordsTable": {"Value": R("Records")}}}
+                "ApiId": {"Value": R("HttpApi")}, "FunctionName": {"Value": R("ApiFunction")}, "RecordsTable": {"Value": R("Records")}, "PlatformTable": {"Value": R("PlatformRecords")}}}
 
 
 if __name__ == "__main__":

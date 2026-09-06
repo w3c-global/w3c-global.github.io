@@ -1,6 +1,7 @@
+param([ValidateSet('demo', 'app')][string]$View = 'demo')
 $ErrorActionPreference = 'Stop'
 $agentuRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$agentuUrl = 'http://127.0.0.1:4322/agentu/demo/'
+$agentuUrl = 'http://127.0.0.1:4322/agentu/' + $View + '/'
 $agentuReady = $false
 try {
     $agentuHealth = Invoke-RestMethod -Uri 'http://127.0.0.1:4322/api/health' -TimeoutSec 2

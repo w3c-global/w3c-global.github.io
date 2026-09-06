@@ -1,4 +1,4 @@
-# Architecture and demonstration limits
+# Architecture and current limits
 
 ## Hosted environment
 
@@ -10,6 +10,7 @@ flowchart LR
   CloudFront -->|Uncached API request| Gateway[HTTP API + JWT authoriser]
   Gateway --> Lambda[Python policy engine]
   Lambda -->|Conditional atomic write| DynamoDB[Per-user rehearsal state]
+  Lambda -->|Version-checked transaction| Platform[Institution records and journals]
   Gateway --> Logs[CloudWatch]
   Lambda --> Logs
 ```
@@ -36,6 +37,18 @@ Each event stores a sequence, UTC timestamp, previous hash and SHA-256 hash of i
 
 The local HTTP server binds only to loopback, rejects cross-origin API calls and Host-header rebinding, and excludes backend source and private local paths from static serving. It substitutes a local presenter identity and a locked, atomically replaced JSON-file store. It must not be exposed publicly or used as the cloud server.
 
+## Institution platform
+
+The operations application uses separate records for institution metadata, memberships, invitations, policies, accounts, usage, actions, journal entries, audit events and idempotency receipts. The platform DynamoDB table has partition and sort keys, encryption, point-in-time recovery and retention on replacement/deletion. Platform records have no automatic TTL. The demonstration table retains its original seven-day session lifecycle.
+
+Platform authentication binds the API Gateway access-token subject to Cognito GetUser and a verified email. Membership is read from the requested institution on every operation. Hosted identities must be provisioned in Cognito before they can accept an institution invitation. Local development uses separate hashed-password identities and hashed cookie sessions; its authentication module is excluded from the Lambda artifact.
+
+Both SQLite and DynamoDB implement the same document transaction contract. Every item read, including absence, is validated at commit. Writes, audit events and idempotency receipts commit atomically. A domain failure caused by inconsistent reads is validated without applying its partial writes and retried if necessary. No external network side effect occurs inside a retryable domain callback.
+
+Pending transfers reserve source funds and daily capacity. Approval rechecks the current mandate, proposer and reviewer authority, active accounts/institution, liquidity and daily limits. A policy revision invalidates earlier approvals; suspended/demoted reviewers are excluded. Self-approval and policy self-publication are prohibited. Settlement updates accounts, usage, the action, the journal and evidence in one transaction. Current expiry is explicit; a scheduled worker is still required.
+
+Journal postings use integer minor units and balance separately by currency. The application exposes no edit/delete journal route. This is an application control, not external evidence immutability. The standalone export verifier checks sequence, count, hashes and balanced postings without relying on the running backend.
+
 ## Before live financial use
 
-Not implemented: real AI/model execution, bank/payment integrations, production role separation, beneficiary onboarding, regulated custody/payment operations, independent evidence signing, financial reconciliation, multi-tenant administration, external penetration testing, incident-response ownership and production service commitments. The demo is a basis for defining those requirements with the founder, not evidence that they have been delivered.
+Not implemented or verified: real AI/model execution, bank/payment integrations, beneficiary onboarding, regulated custody/payment operations, independent evidence signing, reversals/reconciliation, scheduled expiry, deployed multi-tenant security verification, production environment/recovery, external penetration testing, incident-response ownership and service commitments. The full requirement record remains open in `platform-scope.md`.

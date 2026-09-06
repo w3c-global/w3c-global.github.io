@@ -94,6 +94,7 @@ def publish(session, stage):
               "apiBase": "", "clientId": values["UserPoolClientId"], "authDomain": values["AuthDomain"],
               "redirectUri": values["DemoUrl"], "logoutUri": values["WebsiteUrl"]}
     (OUT / "static" / "agentu" / "demo" / "config.json").write_text(json.dumps(config), encoding="utf-8")
+    (OUT / "static" / "agentu" / "app" / "config.json").write_text(json.dumps({**config, "redirectUri": values["AppUrl"]}), encoding="utf-8")
     s3 = session.client("s3")
     # Upload only the allowlist produced by the current build. No recursive sync of the repository.
     for key in manifest["static_files"]:

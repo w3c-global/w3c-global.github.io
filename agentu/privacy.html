@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <base href="/agentu/" />
-    <title>Agentu — Privacy and demo data</title>
+    <title>Agentu — Privacy and development data</title>
     <link rel="stylesheet" href="site.css" />
     <link rel="icon" href="brand/logos/agentu-favicon.svg" />
   </head>
@@ -15,7 +15,7 @@
     </header>
     <main class="legal">
       <p class="eyebrow">Last updated 6 September 2026</p>
-      <h1>Privacy and demo data</h1>
+      <h1>Privacy and development data</h1>
       <p>
         Agentu is a pre-incorporation venture. This site presents the project
         and a demonstration of financial controls. It does not provide banking
@@ -40,11 +40,27 @@
       </p>
       <h2>Browser storage and external resources</h2>
       <p>
-        The demo uses session storage for its sign-in session and workspace
-        identifier. Signing out removes the demo’s session entries. The site
-        loads fonts from Google Fonts, which receives the usual browser request
-        data. No advertising or behavioural analytics have been added. Hosting
-        providers may retain access and security logs.
+        The operations workspace stores institution names, account records,
+        membership emails, policies, proposed actions, decisions and ledger
+        entries. Use fictional institutions and simulated funds during
+        development. Platform records are retained until an authorised retention
+        process removes them; they do not use the demonstration's seven-day
+        expiry. The local workspace stores these records and hashed development
+        passwords in a local database. Local email ownership is assumed for
+        testing. The local sign-in cookie expires after eight hours or on
+        sign-out.
+      </p>
+      <p>
+        The hosted applications use session storage for short-lived sign-in
+        tokens. The operations workspace also keeps its selected institution and
+        pending invitation in session storage. Unconfirmed submission keys and a
+        hash of the request are retained in local storage so retries can avoid
+        duplicate postings, including after sign-in again. These keys contain no
+        passwords, invitation tokens or request contents and are removed when
+        the request has a definitive result. Signing out clears access to the
+        workspace. The site loads fonts from Google Fonts, which receives the
+        usual browser request data. No advertising or behavioural analytics have
+        been added. Hosting providers may retain access and security logs.
       </p>
       <h2>Contact</h2>
       <p>

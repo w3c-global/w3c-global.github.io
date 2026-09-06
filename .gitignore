@@ -12,6 +12,7 @@ desktop.ini
 
 # Agentu local state, build packages and credentials
 .local-demo/
+.local-platform/
 .build/
 .venv/
 __pycache__/

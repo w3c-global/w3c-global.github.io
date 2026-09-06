@@ -6,6 +6,11 @@ from pathlib import Path
 from urllib.parse import urlparse, unquote
 import handler as api
 from storage import FileStore
+from local_auth import LocalAuth
+from platform_core.api import PlatformAPI, payload, response
+from platform_core.errors import PlatformError
+from platform_core.service import PlatformService
+from platform_core.store import DocumentStore, SQLiteBackend
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -21,8 +26,8 @@ class Server(SimpleHTTPRequestHandler):
         path = unquote(urlparse(self.path).path)
         if path.startswith("/api/"):
             return self.api("GET")
-        if path == "/agentu/demo/config.json":
-            data = json.dumps({"mode": "local", "apiBase": "", "environment": "Local rehearsal"}).encode()
+        if path in ("/agentu/demo/config.json", "/agentu/app/config.json"):
+            data = json.dumps({"mode": "local", "apiBase": "", "environment": "Local development"}).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Cache-Control", "no-store")
@@ -53,15 +58,40 @@ class Server(SimpleHTTPRequestHandler):
             return
         try:
             length = int(self.headers.get("Content-Length", "0"))
-            if length < 0 or length > 8192:
+            if length < 0 or length > 32768:
                 self.send_error(413)
                 return
             body = self.rfile.read(length).decode() if length else None
         except (ValueError, UnicodeError):
             self.send_error(400)
             return
-        result = api.handler({"rawPath": urlparse(self.path).path, "headers": dict(self.headers), "body": body,
-                "requestContext": {"http": {"method": method}, "authorizer": {"jwt": {"claims": {"sub": "local-presenter"}}}}}, None)
+        parsed = urlparse(self.path)
+        event = {"rawPath": parsed.path, "rawQueryString": parsed.query, "headers": dict(self.headers), "body": body,
+                 "requestContext": {"http": {"method": method}}}
+        try:
+            if parsed.path.startswith("/api/platform-auth/"):
+                if method != "POST":
+                    result = response(405, {"error": "Use POST."})
+                elif parsed.path in ("/api/platform-auth/login", "/api/platform-auth/register"):
+                    value, session_cookie = self.server.auth.authenticate(payload(event), parsed.path.endswith("/register"))
+                    result = response(200, value)
+                    result["headers"]["Set-Cookie"] = session_cookie
+                elif parsed.path == "/api/platform-auth/logout":
+                    result = response(200, {"signed_out": True})
+                    result["headers"]["Set-Cookie"] = self.server.auth.logout(dict(self.headers))
+                else:
+                    result = response(404, {"error": "Route not found."})
+            elif parsed.path.startswith("/api/platform/"):
+                result = self.server.platform.handle(event, self.server.auth.actor(dict(self.headers)))
+            else:
+                event["requestContext"]["authorizer"] = {"jwt": {"claims": {"sub": "local-presenter"}}}
+                result = api.handler(event, None)
+        except PlatformError as exc:
+            result = response(exc.status, {"error": str(exc), "code": exc.code})
+        except (ValueError, UnicodeError):
+            result = response(400, {"error": "Invalid JSON request."})
+        except Exception:
+            result = response(500, {"error": "The service could not complete the request. Retry with the same request key."})
         data = result["body"].encode()
         self.send_response(result["statusCode"])
         for k, v in result["headers"].items():
@@ -77,5 +107,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     api.store = FileStore(ROOT / ".local-demo")
     server = ThreadingHTTPServer(("127.0.0.1", args.port), Server)
+    documents = DocumentStore(SQLiteBackend(ROOT / ".local-platform" / "platform.sqlite3"))
+    server.platform = PlatformAPI(PlatformService(documents))
+    server.auth = LocalAuth(documents)
     print(f"Agentu local rehearsal: http://127.0.0.1:{args.port}/agentu/", flush=True)
     server.serve_forever()
