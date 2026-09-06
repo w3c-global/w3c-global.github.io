@@ -9,3 +9,15 @@ gen_assets.py
 Thumbs.db
 desktop.ini
 *.swp
+
+# Agentu local state, build packages and credentials
+.local-demo/
+.build/
+.venv/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+*.pem
+*.key

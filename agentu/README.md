@@ -1,52 +1,52 @@
 # Agentu
 
-> AI you can trust with money.
+Agentu is a **pre-incorporation venture** exploring financial controls for AI. This project contains the website, a working demonstration, and infrastructure for separate AWS sandbox and founder-demo environments. It is not a production banking platform.
 
-Marketing site for **Agentu** — the financial-infrastructure network that lets autonomous AI run banking, payments and treasury operations, with every action recorded, monitored and verified.
+## Ownership and scope
 
-## Overview
+- Canonical source: `w3c-global/w3c-global.github.io`, under `agentu/`.
+- Deployment account authorised by the user: `032312375271`.
+- AWS region: London (`eu-west-2`). Separate `agentu-sandbox` and `agentu-demo` stacks.
+- No personal GitHub repository, AWS account or email destination is used by this build.
+- No real bank accounts, funds, customer data, LLM calls or payment integrations.
 
-A single-page, dependency-free static site. Everything ships in one [`index.html`](index.html): markup, styles, and vanilla JavaScript. No build step, no framework, no bundler.
+## Rehearse locally
 
-### Highlights
+Requires Python 3.13 or later. The rehearsal has no third-party Python dependencies.
 
-- **Live ledger** — an animated feed of treasury/payments actions that flip from `checking` to `✓ VERIFIED` in real time.
-- **Motion, tastefully** — staggered scroll reveals, animated nav underlines with an active-section indicator, hover lifts on cards and buttons, and a back-to-top control.
-- **Accessible by default** — skip link, keyboard focus rings, reduced-motion support (`prefers-reduced-motion`), and an inline-validated contact form with ARIA live regions.
-- **Efficient** — layout reads are cached, timers pause in background tabs, and the DOM is only written when state actually changes.
-
-## Structure
-
-```
-.
-├── index.html              # The entire website (HTML + CSS + JS)
-├── brand/                  # Brand assets and guidelines
-│   ├── index.html          # Brand guide
-│   ├── color/              # Palette (CSS, JSON, SVG swatches)
-│   ├── logos/              # Wordmarks, app icon, favicon (SVG)
-│   └── type/               # Type styles
-└── .claude/
-    └── launch.json         # Local static-server config for preview
+```powershell
+python agentu/backend/local.py --port 4322
 ```
 
-## Run locally
+Open `http://127.0.0.1:4322/agentu/` or `http://127.0.0.1:4322/agentu/demo/`. On Windows, `agentu/scripts/launch-demo.ps1` starts a hidden local server and opens the demo. Local state lives in the ignored `.local-demo/` directory. **New rehearsal** creates a new workspace; it does not erase old records.
 
-It's a static file — serve the project root with anything:
+The three scenarios cover an allowed £75,000 treasury sweep, a blocked £25,000 payment to an unknown destination and a £175,000 transfer requiring operator approval. Amounts are editable. Every approval rechecks the current liquidity and hard limits.
 
-```bash
-# Python
-python -m http.server 4321
+## Validate
 
-# Node
-npx serve -l 4321
+```powershell
+python -m unittest discover -s agentu/tests -v
+python -m pip install -r agentu/requirements-tools.txt
+python agentu/scripts/build.py
+cfn-lint .build/template.json
+node --check agentu/site.js
+node --check agentu/demo/app.js
+node --check agentu/demo/auth.js
 ```
 
-Then open <http://localhost:4321>.
+The build allowlists public assets and packages only three backend files into Lambda. It never synchronises the repository, credentials or local demo records to a web bucket.
 
-## Tech
+## Readiness and deployment
 
-Plain HTML5, CSS3, and vanilla JavaScript. Fonts: Source Serif 4, Libre Franklin, IBM Plex Mono (Google Fonts).
+- [Founder walkthrough](docs/founder-walkthrough.md)
+- [Readiness record](docs/readiness.md)
+- [AWS operations and release guide](docs/aws-operations.md)
+- [Architecture and limits](docs/architecture.md)
 
----
+Hosted sessions require invited Cognito users and use DynamoDB with atomic conditional writes. Browser sign-in uses the OAuth authorisation-code flow with PKCE. GitHub releases use short-lived OIDC credentials and an environment-specific release role; infrastructure creation remains a separate operation.
 
-© 2026 Agentu Inc. All rights reserved.
+The enquiry form prepares an email to `frankie@w3c.com`. The visitor reviews and sends it in their email application; the website does not claim to have submitted it.
+
+## Evidence boundary
+
+The audit records form a SHA-256 hash chain. Verification detects inconsistent contents, ordering or links. It is **not** independently anchored, externally signed or immutable against a privileged administrator. Money movements and agent requests are simulated. Production segregation of duties, banking adapters, model governance, reconciliation and external assurance remain future work.
