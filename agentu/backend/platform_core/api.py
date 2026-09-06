@@ -85,6 +85,8 @@ class PlatformAPI:
                     return response(200, self.service.collection(tenant_id, actor, parts[4], after, limit))
                 if method == "GET" and len(parts) in (6, 7) and parts[4] == "reconciliations" and hasattr(self.service, "reconciliation"):
                     return response(200, self.service.reconciliation(tenant_id, actor, parts[5], parts[6] if len(parts) == 7 else None, after, int(query.get("limit", ["40"])[0])))
+                if method == "GET" and len(parts) == 6 and parts[4] == "actions":
+                    return response(200, self.service.action(tenant_id, actor, parts[5]))
                 if method == "POST" and len(parts) == 6 and parts[4] == "commands":
                     return response(200, self.service.command(tenant_id, actor, parts[5], payload(event), headers.get("idempotency-key")))
             return response(404, {"error": "Route not found.", "code": "not_found"})

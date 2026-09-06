@@ -83,6 +83,22 @@ class PlatformHttpTests(unittest.TestCase):
         self.assertEqual(403, self.call(route)[0])
         self.assertEqual(403, self.call(route + "/ledger")[0])
 
+    def test_direct_operation_route_returns_current_status_with_tenant_isolation(self):
+        self.register()
+        _, result = self.call("/api/platform/institutions", {"name": "Direct operation boundary"})
+        root = "/api/platform/institutions/" + result["institution"]["id"]
+        _, source = self.call(root + "/commands/account_create", {"name": "Operating"})
+        _, target = self.call(root + "/commands/account_create", {"name": "Reserve"})
+        self.call(root + "/commands/sandbox_fund", {"account_id": source["account"]["id"], "amount": 1000, "reason": "HTTP verification capital"})
+        _, result = self.call(root + "/commands/action_propose", {"source_id": source["account"]["id"], "destination_id": target["account"]["id"], "amount": 100, "purpose": "Direct linked operation"})
+        route = root + "/actions/" + result["action"]["id"]
+        self.assertEqual("pending", self.call(route)[1]["action"]["status"])
+        self.call(root + "/commands/action_cancel", {"action_id": result["action"]["id"], "reason": "Cancel test operation"})
+        self.assertEqual("cancelled", self.call(route)[1]["action"]["status"])
+        self.assertEqual(404, self.call(route + "/private")[0])
+        self.register()
+        self.assertEqual(403, self.call(route)[0])
+
     def test_browser_session_registration_login_logout_and_institution(self):
         credentials, user = self.register()
         stored_cookie = list(self.cookies)[0]

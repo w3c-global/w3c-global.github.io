@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from .errors import PlatformError
 from .model import Actor, ROLES, amount, canonical, currency, digest, email, identifier, new_id, now, text
 from .jobs import enqueue
+from . import history
 
 ZERO = "0" * 64
 MANAGERS = {"owner", "administrator"}
@@ -113,7 +114,7 @@ class PlatformService:
             tenant = {"id": tenant_id, "name": name, "base_currency": code, "mode": "sandbox", "status": "active",
                       "created_at": now(), "created_by": actor.sub, "policy_id": policy_id, "owner_count": 1,
                       "event_sequence": 0, "event_head": ZERO, "ledger_sequence": 0, "account_count": 0,
-                      "action_count": 0, "pending_count": 0}
+                      "action_count": 0, "pending_count": 0, "history_version": history.VERSION}
             tx.put(pk, "META", tenant, insert_only=True)
             member = {"sub": actor.sub, "email": actor.email, "role": "owner", "status": "active", "joined_at": now()}
             tx.put(pk, "MEMBER#" + actor.sub, member, insert_only=True)
@@ -150,10 +151,18 @@ class PlatformService:
             raise PlatformError("Unknown collection.", 404, "not_found")
         def operation(tx):
             pk, tenant, _ = access(tx, tenant_id, actor)
-            items, cursor = tx.query(pk, self.collections[collection], after=after, limit=limit)
+            items, cursor = (history.page(tx, pk, tenant, collection, after, limit) if collection in history.COLLECTIONS
+                             else tx.query(pk, self.collections[collection], after=after, limit=limit))
             if collection in ("invitations", "agent_keys"):
                 items = [{k: v for k, v in item.items() if k not in ("token_hash", "secret_hash")} for item in items]
-            return {"items": items, "next_cursor": cursor, "as_of_sequence": tenant["event_sequence"], "as_of_head": tenant["event_head"]}
+            return {"items": items, "next_cursor": cursor, "as_of_sequence": tenant["event_sequence"], "as_of_head": tenant["event_head"],
+                    "order": "created_desc" if collection in history.COLLECTIONS else "record_key_asc"}
+        return self.store.transact(operation)
+
+    def action(self, tenant_id, actor, action_id):
+        def operation(tx):
+            pk, _, _ = access(tx, tenant_id, actor)
+            return {"action": required(tx, pk, "ACTION#" + identifier(action_id, "Action ID"))}
         return self.store.transact(operation)
 
     def command(self, tenant_id, actor, operation, body, request_id):
@@ -489,6 +498,7 @@ class PlatformService:
             self._reserve(tx, pk, action)
             action["expiry_job_key"] = enqueue(tx, "action_expire", tenant["id"], action["id"], due=action["expires_at"])
         tx.put(pk, "ACTION#" + action["id"], action, insert_only=True)
+        history.index_record(tx, pk, "actions", action)
         current = required(tx, pk, "META")
         current["action_count"] += 1
         current["pending_count"] += int(action["status"] == "pending")

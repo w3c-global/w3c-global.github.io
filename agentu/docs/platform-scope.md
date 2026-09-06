@@ -14,7 +14,7 @@ The active objective is to build Agentu as an operational product. The guided de
 | Evidence and monitoring | Exports, independent verification, signing/retention, alerts, incident controls and tested recovery | Paginated exports, verifier and worker alarms built; signing, deployed alert delivery and restore pending |
 | Operational web application | Institution/team/account/policy/action/approval/ledger/settings journeys against the real services | Core, treasury-agent, reversal and reconciliation journeys browser-tested locally; hosted model/provider verification pending |
 | AWS environments | Verified sandbox, staging and production configuration in the designated business account, access controls and smoke tests | Account access outstanding |
-| Releases and operations | W3C source, CI, controlled releases, migration/rollback, backups and a completed restore test | CI and release foundation built |
+| Releases and operations | W3C source, CI, controlled releases, migration/rollback, backups and a completed restore test | CI, release foundation and resumable history migration built; deployed upgrade/restore pending |
 | Public site and handover | Accurate product claims, working contact path, hosted product entry, documentation and founder walkthrough | Site revision and walkthrough built; public cutover outstanding |
 
 The user states Agentu is pre-incorporation. Formation, regulated counterparties, commercial agreements and real financial transaction authorisation cannot be inferred from a software build. Software work continues while these external dependencies are identified; the goal remains active until the requested end state is verified.

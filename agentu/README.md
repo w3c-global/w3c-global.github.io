@@ -68,3 +68,5 @@ The audit records form a SHA-256 hash chain. Verification detects inconsistent c
 Agent operation, credential integration, worker behavior and model configuration are documented in [Governed agents](docs/agents.md). The treasury rule runs locally; the Bedrock adapter requires a verified business AWS account and model before it can be exercised live.
 
 [Corrections and reconciliation](docs/accounting.md) covers independently approved full journal reversals, batched statement imports, fixed ledger snapshots, exception investigation and comparison export verification. Supplied statements remain explicitly unauthenticated until a provider integration is verified.
+
+Existing institutions: follow [the ordered-history upgrade](docs/history-upgrade.md) before using this version. New institutions initialize it automatically.

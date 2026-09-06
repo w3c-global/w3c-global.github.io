@@ -85,9 +85,9 @@ Website buckets, user pools and records tables use retention on stack deletion/r
 
 See [Governed agents](agents.md) for queue processing, retry/expiry behavior, worker alarms and the optional `--bedrock-model-arn` infrastructure parameter. The default is no model permission. An omitted parameter preserves an existing model choice; an explicit empty value disables it. Runtime processing remains within the designated business account.
 
-## Agent worker and model setup
+## Existing-institution history upgrade
 
-See [Governed agents](agents.md) for queue processing, retry/expiry behavior, worker alarms and the optional `--bedrock-model-arn` infrastructure parameter. The default is no model permission. An omitted parameter preserves an existing model choice; an explicit empty value disables it. Runtime processing remains within the designated business account.
+Follow [Ordered history and existing-data upgrade](history-upgrade.md) after both API and worker use this revision and older invocations have drained. New institutions initialize the index automatically; existing ones need the resumable migration. A rollback to older writers requires a rebuild before returning to the indexed release. No data-access permission is added to the release role.
 
 ## Sources used for the infrastructure
 

@@ -26,6 +26,7 @@ const S = {
   agentCatalogue: [],
   agentKeys: [],
   capabilities: {},
+  actionId: null,
   reconciliationId: null,
   reconciliation: null,
 };
@@ -183,6 +184,7 @@ async function refresh() {
   if (!institutions.some((x) => x.id === S.tenant)) {
     S.tenant = institutions[0]?.id || null;
     S.reconciliationId = null;
+    S.actionId = null;
   }
   $("#institution").innerHTML = institutions.length
     ? institutions
@@ -212,7 +214,11 @@ async function refresh() {
   ] = await Promise.all([
     call(root + "/overview"),
     accountCatalogue(root),
-    call(root + "/" + page),
+    view === "actions" && S.actionId
+      ? call(root + "/actions/" + encodeURIComponent(S.actionId)).then(
+          (result) => ({ items: [result.action], next_cursor: null }),
+        )
+      : call(root + "/" + page),
     view === "members"
       ? call(root + "/invitations")
       : Promise.resolve({ items: [], next_cursor: null }),
@@ -256,6 +262,7 @@ function renderAuth() {
   S.capabilities = {};
   S.reconciliation = null;
   S.reconciliationId = null;
+  S.actionId = null;
   $("#identity").textContent = "Signed out";
   $("#logout").hidden = true;
   $("#institution").innerHTML =
@@ -437,11 +444,18 @@ function renderActions() {
     heading(
       "Policy-controlled execution",
       "Operations",
-      "Each proposal is checked against the current mandate. Pending requests reserve funds until resolved.",
-      can("action_propose")
-        ? actionButton("action-propose", "Propose transfer", "", "primary")
-        : "",
+      S.actionId
+        ? "The operation linked to this agent run, with its current status and evidence."
+        : "Most recent first. Each proposal is checked against the current mandate. Pending requests reserve funds until resolved.",
+      S.actionId
+        ? actionButton("actions-list", "All operations")
+        : can("action_propose")
+          ? actionButton("action-propose", "Propose transfer", "", "primary")
+          : "",
     ) +
+    (S.cursor
+      ? `<p class="hint">Showing ${records.length} most recent operations. Filters apply to these records; load more for earlier activity.</p>`
+      : "") +
     (records.length
       ? `<div class="toolbar"><input id="operation-search" type="search" placeholder="Filter by purpose or account" aria-label="Filter operations"><select id="operation-status" aria-label="Filter by status"><option value="">All statuses</option>${["pending", "settled", "blocked", "cancelled", "declined", "expired"].map((x) => `<option value="${x}">${x}</option>`).join("")}</select></div><div class="list">${records.map((a) => `<article class="card operation" data-status="${h(a.status)}" data-search="${h((a.purpose + " " + a.source_name + " " + a.destination_name).toLowerCase())}"><header><div><span class="eyebrow">${h(a.kind.replaceAll("_", " "))} · ${h(date(a.created_at))}</span><h2>${h(money(a.amount, a.currency))} <small>→ ${h(a.destination_name)}</small></h2><p>${h(a.purpose)}</p>${a.reversal_of ? `<p class="hint">Reverses journal ${a.reversal_of.sequence}. The original entry is retained.</p>` : ""}<small>From ${h(a.source_name)} · ${h(a.approvals.length)} approval(s)${a.status === "pending" ? " · expires " + h(date(a.expires_at)) : ""}</small></div>${badge(a.status)}</header><details class="detail"><summary>Inspect policy checks and decision</summary>${a.checks.map((c) => `<div class="check"><span>${h(c.rule)}</span>${badge(c.result)}</div>`).join("")}<p class="mono">Action ${h(a.id)}<br>Policy ${h(a.policy_id)}</p>${a.close_reason ? `<p>${h(a.close_reason)}</p>` : ""}${a.approvals.map((x) => `<p><small>${h(x.sub)} · ${h(date(x.timestamp))}</small><br>${h(x.reason)}</p>`).join("")}</details>${a.status === "pending" ? `<div class="actions detail">${a.proposed_by !== S.user.sub && a.initiated_by !== S.user.sub && can("action_approve") ? actionButton("action-approve", "Approve", a.id, "primary") + actionButton("action-decline", "Decline", a.id, "danger") : ""}${can("action_cancel") && (a.proposed_by === S.user.sub || a.initiated_by === S.user.sub || ["owner", "administrator"].includes(S.overview.membership.role)) ? actionButton("action-cancel", "Cancel request", a.id) : ""}${a.expires_at * 1000 <= Date.now() ? actionButton("action-expire", "Release expired request", a.id) : ""}${a.proposed_by === S.user.sub || a.initiated_by === S.user.sub ? "<small>A different authorised person must approve this request.</small>" : ""}</div>` : ""}</article>`).join("")}</div>`
       : empty(
@@ -777,6 +791,11 @@ async function act(action, id) {
       "Update status",
     );
   }
+  if (action === "actions-list") {
+    S.actionId = null;
+    await refresh();
+    return;
+  }
   if (action === "action-propose") {
     const assets = S.accounts.filter(
       (x) => x.kind === "asset" && x.status === "active",
@@ -1004,6 +1023,7 @@ document.querySelectorAll("[data-page]").forEach((button) =>
   button.addEventListener("click", async () => {
     if (!S.user) return;
     S.page = button.dataset.page;
+    S.actionId = null;
     notice("");
     try {
       await refresh();
@@ -1020,6 +1040,7 @@ $("#institution").addEventListener("change", async (event) => {
   }
   S.tenant = event.target.value;
   S.reconciliationId = null;
+  S.actionId = null;
   S.page = "overview";
   try {
     await refresh();

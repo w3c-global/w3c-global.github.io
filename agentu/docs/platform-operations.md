@@ -38,6 +38,7 @@ All platform routes require an authenticated identity. Hosted requests require a
 | `POST /api/platform/invitations/accept` | Accept an email-bound invitation from a body `token` |
 | `GET /api/platform/institutions/{id}/overview` | Institution, membership, permissions, policy and initial account page |
 | `GET /api/platform/institutions/{id}/{collection}` | Accounts, actions, members, invitations, policies, agents, agent_keys, runs, reconciliations, journal or audit; `limit` 1–60 and optional `after` |
+| `GET /api/platform/institutions/{id}/actions/{action_id}` | Current linked operation, independent of history page |
 | `POST /api/platform/institutions/{id}/commands/{operation}` | Execute a permitted command |
 
 Operations: `account_create`, `account_status`, `sandbox_fund`, `invite_create`, `invite_revoke`, `member_update`, `policy_create`, `policy_publish`, `institution_pause`, `action_propose`, `action_approve`, `action_decline`, `action_cancel`, `action_expire`, `reversal_propose`. Reconciliation commands and row/detail routes are documented in [Corrections and reconciliation](accounting.md).
@@ -46,7 +47,7 @@ Money in JSON uses integer minor units. Transfer input is `source_id`, `destinat
 
 Every create/command request needs an `Idempotency-Key` of 16–80 letters, digits, underscores or hyphens. Reuse the same key and payload after an interrupted response. Changing the payload with that key returns a conflict. Access is checked again before replaying a cached result. Invitation acceptance is intrinsically idempotent for the accepting identity. Invitation tokens are returned once and are excluded from persistent response caches and audit records.
 
-Responses use `error` and `code` fields for failures. Pagination is scoped to the authenticated institution. Local sign-in uses `/api/platform-auth/register`, `/login` and `/logout`; these routes and the development identity adapter are not exposed in AWS.
+Responses use `error` and `code` fields for failures. Pagination is scoped to the authenticated institution. Actions, runs and reconciliations use creation order, newest first, and return at most 40 records per page; journal and audit exports retain ascending sequence order. See [Ordered history and existing-data upgrade](history-upgrade.md) before releasing to existing institutions. Local sign-in uses `/api/platform-auth/register`, `/login` and `/logout`; these routes and the development identity adapter are not exposed in AWS.
 
 ## Evidence
 

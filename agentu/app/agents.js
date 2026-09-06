@@ -79,18 +79,17 @@ export function createAgentUI(d) {
       heading(
         "Execution history",
         "Agent runs",
-        "Follow each request from its account snapshot through the decision and resulting operation.",
+        "Most recent first. Follow each request from its account snapshot through the decision and resulting operation.",
         can("agent_run") && eligible().length
           ? button("agent-run", "Start run", "", "primary")
           : "",
       ) +
       '<p class="hint">Active runs refresh automatically. Runs can propose an internal transfer or take no action. The institution policy and agent mandate govern every proposal.</p>' +
       (S.records.length
-        ? `<div class="list">${[...S.records]
-            .sort((a, b) => b.created_at.localeCompare(a.created_at))
+        ? `<div class="list">${S.records
             .map(
               (r) =>
-                `<article class="card"><header><div><span class="eyebrow">${h(providers[r.provider])} · ${h(date(r.created_at))}</span><h2>${h(r.agent_name)}</h2><p>${h(r.instruction || r.output?.purpose || "External proposal")}</p></div>${badge(r.status)}</header>${r.output ? `<div class="detail"><strong>${r.output.action === "no_action" ? "No transfer needed" : r.output.amount ? h(money(r.output.amount, S.accounts.find((a) => a.id === r.output.source_id)?.currency)) + " → " + h(name(r.output.destination_id)) : "Decision recorded"}</strong><p>${h(r.output.reason || r.output.purpose || "")}</p>${r.decision && r.decision !== "no_action" ? `<small>Decision when proposed: </small>${badge(r.decision)}` : ""}</div>` : ""}${r.error ? `<p class="notice error">${h(r.error.message)}</p>` : ""}<div class="actions detail">${r.action_id ? button("agent-operation", "Open operations", r.action_id) : ""}${["queued", "running"].includes(r.status) && can("agent_run_cancel") && (r.requested_by === S.user.sub || manager()) ? button("agent-run-cancel", "Cancel run", r.id, "danger") : ""}</div>${jsonDetails(r, "Run evidence and identifiers")}</article>`,
+                `<article class="card"><header><div><span class="eyebrow">${h(providers[r.provider])} · ${h(date(r.created_at))}</span><h2>${h(r.agent_name)}</h2><p>${h(r.instruction || r.output?.purpose || "External proposal")}</p></div>${badge(r.status)}</header>${r.output ? `<div class="detail"><strong>${r.output.action === "no_action" ? "No transfer needed" : r.output.amount ? h(money(r.output.amount, S.accounts.find((a) => a.id === r.output.source_id)?.currency)) + " → " + h(name(r.output.destination_id)) : "Decision recorded"}</strong><p>${h(r.output.reason || r.output.purpose || "")}</p>${r.decision && r.decision !== "no_action" ? `<small>Decision when proposed: </small>${badge(r.decision)}` : ""}</div>` : ""}${r.error ? `<p class="notice error">${h(r.error.message)}</p>` : ""}<div class="actions detail">${r.action_id ? button("agent-operation", "Open operation", r.action_id) : ""}${["queued", "running"].includes(r.status) && can("agent_run_cancel") && (r.requested_by === S.user.sub || manager()) ? button("agent-run-cancel", "Cancel run", r.id, "danger") : ""}</div>${jsonDetails(r, "Run evidence and identifiers")}</article>`,
             )
             .join("")}</div>`
         : empty(
@@ -346,6 +345,7 @@ export function createAgentUI(d) {
         "Cancel run",
       );
     if (action === "agent-operation") {
+      S.actionId = id;
       S.page = "actions";
       await refresh();
     }

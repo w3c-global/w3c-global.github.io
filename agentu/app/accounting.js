@@ -52,15 +52,14 @@ export function createAccountingUI(d) {
       heading(
         "Accounting assurance",
         "Reconciliation",
-        "Compare a supplied statement with a fixed ledger snapshot. Investigate differences and record an independent review.",
+        "Most recent first. Compare a supplied statement with a fixed ledger snapshot, investigate differences and record an independent review.",
         can("reconciliation_create")
           ? button("recon-create", "Import statement", "", "primary")
           : "",
       ) +
       '<p class="hint">Statements are supplied by your team. A comparison does not authenticate the source or change ledger balances.</p>' +
       (S.records.length
-        ? `<div class="list">${[...S.records]
-            .sort((a, b) => b.created_at.localeCompare(a.created_at))
+        ? `<div class="list">${S.records
             .map(
               (r) =>
                 `<article class="card"><header><div><span class="eyebrow">${h(r.account_name)} · ${h(r.currency)} · ${h(date(r.created_at))}</span><h2>${h(r.statement_reference)}</h2><p>${h(r.period_start)} to ${h(r.period_end)}</p></div>${badge(r.status)}</header><p class="muted">${r.uploaded_rows} / ${r.total_rows} statement rows · journals ${r.ledger_start + 1}–${r.ledger_end}${r.closing_variance !== undefined ? " · closing difference " + h(money(r.closing_variance, r.currency)) : ""}</p>${button("recon-open", "Open comparison", r.id)}</article>`,

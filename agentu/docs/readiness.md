@@ -9,13 +9,13 @@ The requested end state is the full platform. The work below is verified progres
 - Server-side policy engine with integer money values, fixed mandates, hard-limit precedence and rechecks at approval.
 - Idempotency, atomic state updates and user/workspace isolation.
 - Local rehearsal server and Windows launcher.
-- 82 automated tests covering the demo, institution service, version-checked storage, HTTP authentication and export verification.
+- 92 automated tests covering the demo, institution service, version-checked storage, HTTP authentication and export verification.
 - Browser checks: allowed sweep, blocked destination and approval produce the expected balances and 10 linked audit events.
 - JavaScript syntax checks and CloudFormation schema/lint validation pass.
 - Allowlisted static build and Lambda package.
 - Infrastructure templates for separate AWS sandbox and demo stacks in the designated account.
 - CI checks, OIDC release workflow, narrow release-role setup, and deployment/rollback instructions.
-- Work is saved on the business branch for W3C draft pull request #1. The CI workflow runs all 82 tests, JavaScript checks and CloudFormation validation; check its result against the current commit before deployment.
+- Work is saved on the business branch for W3C draft pull request #1. The CI workflow runs all 92 tests, JavaScript checks and CloudFormation validation; check its result against the current commit before deployment.
 - GitHub release environments `agentu-sandbox` and `agentu-demo` created with branch restrictions. AWS role attachment remains pending.
 - Founder walkthrough for Tuesday 8 September.
 - Operational application at `/agentu/app/`: onboarding, institutions, accounts, funding, operations, policies, team access, ledger and audit.
@@ -39,6 +39,13 @@ The requested end state is the full platform. The work below is verified progres
 - Comparison exports have a standalone arithmetic, completeness, link and hash verifier; CSV parser tests cover quoted fields, dates, duplicate IDs and exact signed amounts.
 - The latest accounting snapshot verifies 44 linked audit events, five balanced journals and both clean/exception comparison exports. After correction and a further independently approved agent transfer, balances are GBP 2.35m Operating and GBP 150k Reserve, with zero reserved.
 - The final comparison and expanded evidence were inspected at 390 pixels: no page-level horizontal overflow; wide row tables scroll inside their panels.
+
+## History and upgrade verification
+
+- Operations, agent runs and reconciliations now paginate in creation order across the full history. Agent-run links open the exact current operation.
+- Tests verify more than 40 records, timestamp ties, inserts between pages, resumable upgrades and rollback rebuilds. A mocked DynamoDB page fits the full read-set check.
+- The local upgrade preserved 129 existing source records, added nine pointers and one audit event, and resumed after a deliberately bounded first run. The latest institution has 45 linked audit events and five balanced journals. Direct links and return to the complete list were verified in the browser.
+- Existing institutions must follow `history-upgrade.md`; deployed migration verification remains outstanding.
 
 ## Not yet verified / blocked by account access
 

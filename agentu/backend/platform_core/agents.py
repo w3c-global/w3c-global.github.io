@@ -11,6 +11,7 @@ import time
 from datetime import datetime, timezone
 from .errors import PlatformError
 from .jobs import enqueue
+from .history import index_record
 from .model import Actor, amount, currency, digest, identifier, new_id, now, text
 from .service import PlatformService, PERMISSIONS, COLLECTIONS, MANAGERS, access, audit, required, tenant_key
 
@@ -177,6 +178,7 @@ class AgentService(PlatformService):
                "instruction": text(body.get("instruction", agent["config"]["objective"]), "Run instruction", 10, 1000)}
         run["job_key"] = enqueue(tx, "agent_run", tenant["id"], run["id"])
         tx.put(pk, "RUN#" + run["id"], run, insert_only=True)
+        index_record(tx, pk, "runs", run)
         audit(tx, pk, actor, "agent_run_requested", run)
         return {"run": run}
 
@@ -228,6 +230,7 @@ class AgentService(PlatformService):
                    "requested_by": credential["created_by"], "credential_id": credential["id"], "action_id": result["action"]["id"],
                    "decision": result["action"]["status"], "output": body}
             tx.put(pk, "RUN#" + run["id"], run, insert_only=True)
+            index_record(tx, pk, "runs", run)
             audit(tx, pk, actor, "external_agent_proposal_recorded", {"run_id": run["id"], "action_id": run["action_id"], "decision": run["decision"]})
             result["run"] = run
             tx.put(pk, key, {"fingerprint": fingerprint, "response": result}, insert_only=True)

@@ -8,6 +8,7 @@ from datetime import date
 from .agents import AgentService
 from .errors import PlatformError
 from .jobs import enqueue
+from .history import index_record
 from .model import amount, digest, identifier, new_id, now, text
 from .service import MANAGERS, ZERO, access, audit, required
 
@@ -129,6 +130,7 @@ class AccountingService(AgentService):
                   "ledger_opening": 0, "ledger_closing": 0, "ledger_rows": 0, "matched_rows": 0, "processed_rows": 0,
                   "phase": "ledger", "ledger_cursor": None, "ledger_scanned": 0}
         tx.put(pk, "RECON#" + record["id"], record, insert_only=True)
+        index_record(tx, pk, "reconciliations", record)
         tx.put(pk, key, {"id": record["id"], "fingerprint": digest(header)}, insert_only=True)
         audit(tx, pk, actor, "statement_import_started", record)
         return {"reconciliation": record}
