@@ -2,7 +2,7 @@
 import json
 import os
 import time
-from platform_core.agents import AgentService
+from platform_core.accounting import AccountingService
 from platform_core.runner import Runner
 from platform_core.store import DocumentStore, DynamoBackend
 
@@ -12,7 +12,7 @@ runner = None
 def handler(event, context):
     global runner
     if runner is None:
-        runner = Runner(AgentService(DocumentStore(DynamoBackend(os.environ["PLATFORM_TABLE_NAME"]))))
+        runner = Runner(AccountingService(DocumentStore(DynamoBackend(os.environ["PLATFORM_TABLE_NAME"]))))
     try:
         results = runner.tick(max_jobs=10, seconds=min(65, context.get_remaining_time_in_millis() / 1000 - 10))
         counts = {}

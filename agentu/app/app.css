@@ -757,6 +757,30 @@ fieldset[hidden] {
   background: #fae5e0;
   color: #993c2e;
 }
+.badge.reconciled,
+.badge.matched,
+.badge.ready {
+  background: #e4f2e6;
+  color: #286439;
+}
+.badge.accepted_with_exceptions,
+.badge.unmatched,
+.badge.uploading,
+.badge.reconciling {
+  background: #fff2cf;
+  color: #795100;
+}
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 18px 0;
+}
+.choice input {
+  width: auto;
+  flex: none;
+  margin-top: 3px;
+}
 @media (max-width: 760px) {
   .capability-strip {
     grid-template-columns: 1fr;

@@ -19,6 +19,7 @@ PERMISSIONS = {
     "invite_create": MANAGERS, "invite_revoke": MANAGERS, "member_update": {"owner"},
     "policy_create": MANAGERS, "policy_publish": MANAGERS, "institution_pause": MANAGERS,
     "action_propose": {"owner", "operator"}, "action_approve": {"owner", "approver"},
+    "reversal_propose": {"owner", "operator"},
     "action_decline": {"owner", "approver"}, "action_cancel": {"owner", "administrator", "operator"},
     "action_expire": ROLES,
 }
@@ -204,7 +205,7 @@ class PlatformService:
               "reason": text(body.get("reason", "Account status updated."), "Status reason", 5, 500)})
         return {"account": account}
 
-    def _journal(self, tx, pk, actor, postings, reference, reason):
+    def _journal(self, tx, pk, actor, postings, reference, reason, reversal_of=None):
         totals = {}
         seen = set()
         for posting in postings:
@@ -234,6 +235,8 @@ class PlatformService:
         sequence = tenant["ledger_sequence"]
         journal = {"sequence": sequence, "id": new_id(), "timestamp": now(), "actor": actor.sub,
                    "reference": reference, "reason": reason, "postings": postings}
+        if reversal_of:
+            journal["reversal_of"] = reversal_of
         tx.put(pk, f"JOURNAL#{sequence:020d}", journal, insert_only=True)
         tx.put(pk, "META", tenant)
         return journal
@@ -397,17 +400,23 @@ class PlatformService:
             ("Originator authorised", bool(proposer and proposer["status"] == "active" and proposer["role"] in PERMISSIONS["action_propose"]), "Current institution membership"),
             ("Institution active", tenant["status"] == "active", tenant["status"]),
             ("Accounts active", source["status"] == target["status"] == "active", {"source": source["status"], "destination": target["status"]}),
-            ("Asset accounts", source["kind"] == target["kind"] == "asset", {"source": source["kind"], "destination": target["kind"]}),
+            ("Eligible ledger accounts", source["kind"] == "asset" and (target["kind"] == "asset" or bool(action.get("reversal_of") and target["id"] == "sandbox-equity-" + action["currency"] and target["kind"] == "equity")), {"source": source["kind"], "destination": target["kind"]}),
             ("Currency mandate", action["currency"] in config["currencies"] and source["currency"] == target["currency"] == action["currency"], config["currencies"]),
             ("Transaction limit", action["amount"] <= config["transaction_limit"], config["transaction_limit"]),
             ("Daily limit", counted + action["amount"] <= config["daily_limit"], {"limit": config["daily_limit"], "committed_and_reserved": counted}),
             ("Liquidity floor", available - action["amount"] >= config["liquidity_floor"], {"available": available, "floor": config["liquidity_floor"]}),
         ]
+        if action.get("reversal_of"):
+            original = required(tx, pk, f"JOURNAL#{action['reversal_of']['sequence']:020d}")
+            link = required(tx, pk, "REVERSAL#" + original["id"])
+            rules.append(("Original journal and reversal claim", digest(original) == action["reversal_of"]["hash"] and link["action_id"] == action["id"], action["reversal_of"]))
         rules.extend(self._agent_checks(tx, pk, action, held=held))
         checks = [{"rule": name, "result": "pass" if passed else "fail", "evidence": evidence} for name, passed, evidence in rules]
         automatic_review = action["amount"] > config["auto_limit"]
         agent_review = self._agent_review(tx, pk, action)
-        review = automatic_review or agent_review
+        review = automatic_review or agent_review or bool(action.get("reversal_of"))
+        if action.get("reversal_of"):
+            checks.append({"rule": "Independent correction review", "result": "review", "evidence": "Every journal reversal requires independent approval."})
         checks.append({"rule": "Automatic limit", "result": "review" if automatic_review else "pass", "evidence": config["auto_limit"]})
         if action.get("agent_id"):
             checks.append({"rule": "Agent independent review", "result": "review" if agent_review else "pass", "evidence": {"required": agent_review}})
@@ -444,16 +453,16 @@ class PlatformService:
         self._release(tx, pk, action)
         journal = self._journal(tx, pk, actor, [
             {"account_id": action["source_id"], "debit": 0, "credit": action["amount"], "currency": action["currency"]},
-            {"account_id": action["destination_id"], "debit": action["amount"], "credit": 0, "currency": action["currency"]}], action["id"], action["purpose"])
+            {"account_id": action["destination_id"], "debit": action["amount"], "credit": 0, "currency": action["currency"]}], action["id"], action["purpose"], action.get("reversal_of"))
         date = datetime.now(timezone.utc).date().isoformat()
         key, usage = self._usage(tx, pk, date, action["currency"])
         usage["executed"] += action["amount"]
         tx.put(pk, key, usage)
         self._agent_meter(tx, pk, action, date, "executed", action["amount"])
         action.update(status="settled", settled_at=now(), journal_sequence=journal["sequence"])
-        audit(tx, pk, actor, "internal_transfer_posted", journal)
+        audit(tx, pk, actor, "journal_reversal_posted" if action.get("reversal_of") else "internal_transfer_posted", journal)
 
-    def _action_propose(self, tx, pk, tenant, actor, member, body):
+    def _action_propose(self, tx, pk, tenant, actor, member, body, *, reversal=None):
         source_id = identifier(body.get("source_id"), "Source account")
         destination_id = identifier(body.get("destination_id"), "Destination account")
         if source_id == destination_id:
@@ -465,6 +474,9 @@ class PlatformService:
                   "amount": amount(body.get("amount")), "purpose": text(body.get("purpose"), "Purpose", 5, 500),
                   "created_at": now(), "proposed_by": actor.sub, "initiated_by": actor.initiated_by, "approvals": [], "reserved": False,
                   "usage_date": datetime.now(timezone.utc).date().isoformat(), "mode": tenant["mode"]}
+        if reversal:
+            action.update(kind="ledger_reversal", reversal_of=reversal)
+            tx.put(pk, "REVERSAL#" + reversal["id"], {"action_id": action["id"], "original_sequence": reversal["sequence"]})
         if member.get("kind") == "agent":
             action.update(agent_id=member["agent_id"], agent_revision=member["agent_revision"], credential_id=actor.credential_id)
         policy, checks, decision = self._evaluate(tx, pk, tenant, action)
@@ -482,6 +494,27 @@ class PlatformService:
         current["pending_count"] += int(action["status"] == "pending")
         tx.put(pk, "META", current)
         return {"action": action}
+
+    def _reversal_propose(self, tx, pk, tenant, actor, member, body):
+        if actor.kind != "human":
+            raise PlatformError("Journal corrections require a human identity.", 403, "forbidden")
+        sequence = amount(body.get("journal_sequence"), "Journal sequence")
+        journal = required(tx, pk, f"JOURNAL#{sequence:020d}")
+        if journal.get("reversal_of"):
+            raise PlatformError("This entry already corrects an earlier journal. Use a new governed transfer or sandbox funding entry to record a subsequent adjustment.", 409, "correction_entry")
+        link = tx.get(pk, "REVERSAL#" + journal["id"])
+        if link:
+            prior = required(tx, pk, "ACTION#" + link["action_id"])
+            if prior["status"] in ("pending", "settled"):
+                raise PlatformError("This journal already has a pending or posted reversal.", 409, "reversal_exists")
+        postings = journal["postings"]
+        debits = [p for p in postings if p["debit"] > 0 and p["credit"] == 0]
+        credits = [p for p in postings if p["credit"] > 0 and p["debit"] == 0]
+        if len(postings) != 2 or len(debits) != 1 or len(credits) != 1 or debits[0]["debit"] != credits[0]["credit"] or debits[0]["currency"] != credits[0]["currency"]:
+            raise PlatformError("This journal is outside the supported two-account reversal format.", 409, "journal_format")
+        return self._action_propose(tx, pk, tenant, actor, member, {"source_id": debits[0]["account_id"],
+            "destination_id": credits[0]["account_id"], "amount": debits[0]["debit"], "purpose": text(body.get("reason"), "Correction reason", 10, 500)},
+            reversal={"sequence": sequence, "id": journal["id"], "hash": digest(journal)})
 
     def _finish_pending(self, tx, pk, actor, action, status, reason):
         self._release(tx, pk, action)

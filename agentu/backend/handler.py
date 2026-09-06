@@ -6,7 +6,7 @@ from domain import DomainError, apply, public_state
 from storage import DynamoStore
 from platform_core.api import PlatformAPI, AgentAPI, cognito_actor
 from platform_core.errors import PlatformError
-from platform_core.agents import AgentService
+from platform_core.accounting import AccountingService
 from platform_core.store import DocumentStore, DynamoBackend
 
 store = None
@@ -26,7 +26,7 @@ def handler(event, context):
     if path.startswith("/api/agent/"):
         try:
             if agent_api is None:
-                agent_api = AgentAPI(AgentService(DocumentStore(DynamoBackend(os.environ["PLATFORM_TABLE_NAME"]))))
+                agent_api = AgentAPI(AccountingService(DocumentStore(DynamoBackend(os.environ["PLATFORM_TABLE_NAME"]))))
             return agent_api.handle(event)
         except Exception:
             print(json.dumps({"error": "agent_request_failed", "request_id": getattr(context, "aws_request_id", "unknown")}))
@@ -35,7 +35,7 @@ def handler(event, context):
         try:
             actor = cognito_actor(event)
             if platform is None:
-                platform = PlatformAPI(AgentService(DocumentStore(DynamoBackend(os.environ["PLATFORM_TABLE_NAME"]))))
+                platform = PlatformAPI(AccountingService(DocumentStore(DynamoBackend(os.environ["PLATFORM_TABLE_NAME"]))))
             return platform.handle(event, actor)
         except PlatformError as exc:
             return response(exc.status, {"error": str(exc), "code": exc.code})

@@ -44,7 +44,15 @@ To make a new live local run without altering funds, start Reserve steward again
 
 Show the external-agent credential lifecycle and explain that its credential can submit a bounded proposal only. It cannot administer the institution or approve transfers. Company formation, hosted AWS verification and real bank integration remain open.
 
-## 7. Agree the next decisions — 2 minutes
+## 7. Show accounting correction and reconciliation — 3 minutes
+
+In Ledger, inspect the independently approved correction of journal 2. The original and inverse entries remain visible. Explain that corrections require a new mandate-checked request and a different reviewer.
+
+In Reconciliation, open **September treasury statement — local verification**. Two supplied statement rows match journals 2–3 and the independent review records zero differences. Its GBP 2.35m closing snapshot remains fixed even after a later journal reversal. Open **Statement difference — local verification** to show the unmatched GBP 100 charge and its explicit acceptance with exceptions. The charge remains visible and no balancing adjustment was posted.
+
+These are fictional supplied statements. Matching and hashes do not establish bank authenticity. Show the export and independent-verifier command if the founder wants to inspect the accounting evidence.
+
+## 8. Agree the next decisions — 2 minutes
 
 - The founder’s preferred initial customer and workflow.
 - Which existing platform/IP, if any, should be integrated with this prototype.

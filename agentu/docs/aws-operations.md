@@ -70,7 +70,8 @@ The **Release Agentu** workflow runs tests and template validation before assumi
 12. Verify cross-institution denial, independent policy publication, role suspension, a pending transfer, independent approval, balanced journal entries and export verification through the deployed API.
 13. Publish an agent mandate using separate identities; run the treasury rule, approve its proposal independently and verify a subsequent no-action result. Exercise cancellation and reservation expiry.
 14. Verify worker heartbeat, failed-run and expiry-retry metrics and alarm delivery. If Bedrock is configured, record an actual model invocation and model ARN; mock tests do not verify model availability.
-15. Run concurrent requests against the deployed DynamoDB adapter and record transaction-conflict/idempotency outcomes. Local storage tests and mocked AWS request checks do not substitute for this.
+15. Request and independently approve a full journal reversal, verifying the retained original and inverse new entry. Import a statement, verify fixed-cut-off matching, manual rematching, clean review and explicit exception acceptance. Verify a comparison export independently.
+16. Run concurrent requests against the deployed DynamoDB adapter and record transaction-conflict/idempotency outcomes. Local storage tests and mocked AWS request checks do not substitute for this.
 
 ## Rollback and recovery
 

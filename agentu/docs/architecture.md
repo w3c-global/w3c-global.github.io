@@ -58,6 +58,12 @@ Journal postings use integer minor units and balance separately by currency. The
 
 AgentService extends the same transactional institution service. Independently published mandates create machine identities with account/currency/limit restrictions. External credentials bind to a specific mandate revision and an active issuing owner; they authenticate only to the exact proposal API. Internal providers use durable runs with leases, bounded attempts and cancellation. Model output is a proposal and is re-evaluated inside the settlement transaction; providers never execute ledger or banking operations directly. See [Governed agents](agents.md).
 
+## Accounting controls
+
+Full journal reversals derive their opposite postings from a retained original journal and are always independently reviewed. A transactionally claimed original-journal link prevents duplicate reversals. Current policies, liquidity and original hashes are rechecked before posting the new journal.
+
+AccountingService extends the application with supplied-statement imports and reconciliation records. The durable worker scans complete journal sequences through an explicit cut-off, builds reference indexes in bounded pages and matches signed account movements one-to-one. Manual changes revise the comparison hash and invalidate stale review requests. Final independent review records either reconciled or accepted-with-exceptions status; it never changes balances. Statement source hashes are declared evidence, not bank authentication. See [Corrections and reconciliation](accounting.md).
+
 ## Before live financial use
 
-Not implemented or verified: real AI/model execution, bank/payment integrations, beneficiary onboarding, regulated custody/payment operations, independent evidence signing, reversals/reconciliation, deployed multi-tenant security verification, production environment/recovery, external penetration testing, incident-response ownership and service commitments. The full requirement record remains open in `platform-scope.md`.
+Not implemented or verified: real AI/model execution, bank/payment integrations, beneficiary onboarding, regulated custody/payment operations, independent evidence signing, authenticated provider statement reconciliation, deployed multi-tenant security verification, production environment/recovery, external penetration testing, incident-response ownership and service commitments. The full requirement record remains open in `platform-scope.md`.

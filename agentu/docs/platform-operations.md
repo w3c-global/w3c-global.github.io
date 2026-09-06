@@ -37,10 +37,10 @@ All platform routes require an authenticated identity. Hosted requests require a
 | `POST /api/platform/institutions` | Create a sandbox institution from `name` and `currency` |
 | `POST /api/platform/invitations/accept` | Accept an email-bound invitation from a body `token` |
 | `GET /api/platform/institutions/{id}/overview` | Institution, membership, permissions, policy and initial account page |
-| `GET /api/platform/institutions/{id}/{collection}` | Accounts, actions, members, invitations, policies, agents, agent_keys, runs, journal or audit; `limit` 1–60 and optional `after` |
+| `GET /api/platform/institutions/{id}/{collection}` | Accounts, actions, members, invitations, policies, agents, agent_keys, runs, reconciliations, journal or audit; `limit` 1–60 and optional `after` |
 | `POST /api/platform/institutions/{id}/commands/{operation}` | Execute a permitted command |
 
-Operations: `account_create`, `account_status`, `sandbox_fund`, `invite_create`, `invite_revoke`, `member_update`, `policy_create`, `policy_publish`, `institution_pause`, `action_propose`, `action_approve`, `action_decline`, `action_cancel`, `action_expire`.
+Operations: `account_create`, `account_status`, `sandbox_fund`, `invite_create`, `invite_revoke`, `member_update`, `policy_create`, `policy_publish`, `institution_pause`, `action_propose`, `action_approve`, `action_decline`, `action_cancel`, `action_expire`, `reversal_propose`. Reconciliation commands and row/detail routes are documented in [Corrections and reconciliation](accounting.md).
 
 Money in JSON uses integer minor units. Transfer input is `source_id`, `destination_id`, `amount`, `purpose`. Decisions use `action_id` and `reason`. Policy configuration contains `auto_limit`, `transaction_limit`, `daily_limit`, `liquidity_floor`, `required_approvals` (1–3), `approval_minutes` (5–1440) and `currencies` (GBP, EUR and/or USD). Limits apply separately to each currency; no FX conversion is implied.
 
@@ -64,6 +64,8 @@ The CloudFormation template adds a separate `PlatformRecords` table, authenticat
 
 Hosted users remain administrator-provisioned in Cognito. An institution invitation assigns a role after sign-in; it does not itself create the Cognito identity. The local identity database is development-only, with hashed passwords, hashed sessions, eight-hour HttpOnly/SameSite cookies and per-identity login throttling. Keep the local server on loopback.
 
-The current service posts internal sandbox transfers and includes governed agent identities, scoped credentials, a treasury rule, a Bedrock adapter and an automatic expiry worker. See [Governed agents](agents.md) for authority, credential lifecycle, run processing and configuration. Real model invocation, external financial providers, beneficiary lifecycle, reconciliation/reversals and evidence signing remain unfinished or unverified in `platform-scope.md`.
+The current service posts internal sandbox transfers and includes governed agent identities, scoped credentials, a treasury rule, a Bedrock adapter and an automatic expiry worker. See [Governed agents](agents.md) for authority, credential lifecycle, run processing and configuration. Real model invocation, external financial providers, beneficiary lifecycle, authenticated provider statements and evidence signing remain unfinished or unverified in `platform-scope.md`.
 
 References: [Cognito GetUser](https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_GetUser.html), [DynamoDB transaction permissions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis-iam.html), [DynamoDB transactions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html).
+
+The ledger now supports governed full reversals and the application compares supplied statements with fixed ledger snapshots. Reconciliation never posts an automatic balancing entry; outstanding differences require explicit independent acceptance and remain visible.

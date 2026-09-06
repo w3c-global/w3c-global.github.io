@@ -10,7 +10,7 @@ from storage import FileStore
 from local_auth import LocalAuth
 from platform_core.api import PlatformAPI, AgentAPI, payload, response
 from platform_core.errors import PlatformError
-from platform_core.agents import AgentService
+from platform_core.accounting import AccountingService
 from platform_core.runner import Runner
 from platform_core.store import DocumentStore, SQLiteBackend
 
@@ -102,7 +102,12 @@ class Server(SimpleHTTPRequestHandler):
             self.send_header(k, v)
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
-        self.wfile.write(data)
+        try:
+            self.wfile.write(data)
+        except (BrokenPipeError, ConnectionAbortedError, ConnectionResetError):
+            # Navigation or an interrupted response does not undo a committed
+            # command. Retrying its key retrieves the persistent receipt.
+            pass
 
 
 if __name__ == "__main__":
@@ -112,7 +117,7 @@ if __name__ == "__main__":
     api.store = FileStore(ROOT / ".local-demo")
     server = ThreadingHTTPServer(("127.0.0.1", args.port), Server)
     documents = DocumentStore(SQLiteBackend(ROOT / ".local-platform" / "platform.sqlite3"))
-    service = AgentService(documents)
+    service = AccountingService(documents)
     server.platform = PlatformAPI(service)
     server.agents = AgentAPI(service)
     server.auth = LocalAuth(documents)

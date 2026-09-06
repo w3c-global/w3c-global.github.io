@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 import local
 from local_auth import LocalAuth
 from platform_core.api import PlatformAPI, AgentAPI, cognito_actor
-from platform_core.agents import AgentService
+from platform_core.accounting import AccountingService
 from platform_core.errors import PlatformError
 from platform_core.service import PlatformService
 from platform_core.store import DocumentStore, SQLiteBackend, DynamoBackend, UnitOfWork
@@ -28,7 +28,7 @@ class PlatformHttpTests(unittest.TestCase):
         cls.documents = DocumentStore(SQLiteBackend(Path(cls.temp.name) / "platform.sqlite3"))
         cls.server = local.ThreadingHTTPServer(("127.0.0.1", 0), local.Server)
         cls.server.auth = LocalAuth(cls.documents)
-        service = AgentService(cls.documents)
+        service = AccountingService(cls.documents)
         cls.server.platform = PlatformAPI(service)
         cls.server.agents = AgentAPI(service)
         cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
@@ -66,6 +66,22 @@ class PlatformHttpTests(unittest.TestCase):
         self.assertEqual(401, self.call("/api/agent/proposals", proposal, {"Authorization": "Bearer agtu_" + "x" * 43})[0])
         self.cookies.clear()
         self.assertEqual(401, self.call("/api/platform/institutions", headers={"Authorization": "Bearer agtu_" + "x" * 43})[0])
+
+    def test_reconciliation_detail_and_row_routes_keep_the_institution_boundary(self):
+        self.register()
+        _, result = self.call("/api/platform/institutions", {"name": "HTTP reconciliation boundary"})
+        root = "/api/platform/institutions/" + result["institution"]["id"]
+        _, result = self.call(root + "/commands/account_create", {"name": "HTTP operating"})
+        _, imported = self.call(root + "/commands/reconciliation_create", {"account_id": result["account"]["id"], "currency": "GBP",
+            "statement_reference": "Empty statement", "source_sha256": "a" * 64, "period_start": "2026-09-01", "period_end": "2026-09-06",
+            "total_rows": 0, "opening_balance": 0, "closing_balance": 0})
+        route = root + "/reconciliations/" + imported["reconciliation"]["id"]
+        self.assertEqual("uploading", self.call(route)[1]["reconciliation"]["status"])
+        self.assertEqual([], self.call(route + "/statement")[1]["items"])
+        self.assertEqual(400, self.call(route + "/secrets")[0])
+        self.register()
+        self.assertEqual(403, self.call(route)[0])
+        self.assertEqual(403, self.call(route + "/ledger")[0])
 
     def test_browser_session_registration_login_logout_and_institution(self):
         credentials, user = self.register()

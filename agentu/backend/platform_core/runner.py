@@ -73,6 +73,10 @@ class Runner:
             if lease is None and job["lease_until"] > time.time():
                 return {"status": "ignored"}
             pk = tenant_key(job["tenant_id"])
+            if job["kind"] == "reconciliation":
+                self.service.reconciliation_failed(tx, pk, job, error, SYSTEM)
+                tx.delete_work(key)
+                return {"status": "failed"}
             if job["kind"] == "agent_run":
                 run = required(tx, pk, "RUN#" + job["reference"])
                 if run["status"] not in ("queued", "running"):
@@ -104,6 +108,14 @@ class Runner:
             if not job or job.get("lease") != expected["lease"] or job["lease_until"] <= time.time():
                 return {"status": "ignored"}
             pk = tenant_key(job["tenant_id"])
+            if job["kind"] == "reconciliation":
+                complete = self.service.reconciliation_step(tx, pk, job, SYSTEM)
+                if complete:
+                    tx.delete_work(job["key"])
+                else:
+                    job.update(lease_until=0)
+                    tx.put(QUEUE, job["key"], job)
+                return {"status": "compared" if complete else "comparing"}
             if job["kind"] == "action_expire":
                 action = required(tx, pk, "ACTION#" + job["reference"])
                 if action["status"] == "pending":
@@ -135,7 +147,7 @@ class Runner:
             claimed = self.claim(key)
             if claimed is None:
                 return {"status": "ignored"}
-            if claimed["job"]["kind"] == "action_expire":
+            if claimed["job"]["kind"] in ("action_expire", "reconciliation"):
                 return self.finish(claimed)
             provider = self.providers.get(claimed["context"]["agent"]["config"]["provider"])
             if provider is None:

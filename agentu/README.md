@@ -34,6 +34,8 @@ node --check agentu/demo/app.js
 node --check agentu/demo/auth.js
 node --check agentu/app/app.js
 node --check agentu/app/agents.js
+node --check agentu/app/accounting.js
+node agentu/tests/test_statement.mjs
 ```
 
 The build allowlists public assets and the Lambda modules. The local development authentication adapter and local databases are excluded from the Lambda package. Credentials and development records are never synchronised to a web bucket.
@@ -61,6 +63,8 @@ The enquiry form prepares an email to `frankie@w3c.com`. The visitor reviews and
 
 ## Evidence boundary
 
-The audit records form a SHA-256 hash chain. Verification detects inconsistent contents, ordering or links. It is **not** independently anchored, externally signed or immutable against a privileged administrator. Financial operations use simulated funds and internal ledger postings. Real model invocation, bank execution, reversals, reconciliation, evidence signing, production infrastructure and operational assurance remain outstanding in the full completion record.
+The audit records form a SHA-256 hash chain. Verification detects inconsistent contents, ordering or links. It is **not** independently anchored, externally signed or immutable against a privileged administrator. Financial operations use simulated funds and internal ledger postings. Real model invocation, bank execution, authenticated provider statements, evidence signing, production infrastructure and operational assurance remain outstanding in the full completion record.
 
 Agent operation, credential integration, worker behavior and model configuration are documented in [Governed agents](docs/agents.md). The treasury rule runs locally; the Bedrock adapter requires a verified business AWS account and model before it can be exercised live.
+
+[Corrections and reconciliation](docs/accounting.md) covers independently approved full journal reversals, batched statement imports, fixed ledger snapshots, exception investigation and comparison export verification. Supplied statements remain explicitly unauthenticated until a provider integration is verified.

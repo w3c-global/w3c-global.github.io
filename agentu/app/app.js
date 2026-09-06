@@ -1,5 +1,6 @@
 import { signIn, finishSignIn, token, signOut } from "../demo/auth.js";
 import { createAgentUI } from "./agents.js";
+import { createAccountingUI } from "./accounting.js";
 
 const $ = (selector) => document.querySelector(selector);
 const h = (value = "") =>
@@ -25,6 +26,8 @@ const S = {
   agentCatalogue: [],
   agentKeys: [],
   capabilities: {},
+  reconciliationId: null,
+  reconciliation: null,
 };
 let loadVersion = 0;
 const money = (minor, currency = "GBP") =>
@@ -177,8 +180,10 @@ async function refresh() {
   $("#logout").hidden = false;
   const institutions = await directory();
   if (!current()) return;
-  if (!institutions.some((x) => x.id === S.tenant))
+  if (!institutions.some((x) => x.id === S.tenant)) {
     S.tenant = institutions[0]?.id || null;
+    S.reconciliationId = null;
+  }
   $("#institution").innerHTML = institutions.length
     ? institutions
         .map(
@@ -203,6 +208,7 @@ async function refresh() {
     agents,
     agentKeys,
     capabilities,
+    reconciliation,
   ] = await Promise.all([
     call(root + "/overview"),
     accountCatalogue(root),
@@ -219,6 +225,9 @@ async function refresh() {
     ["agents", "runs"].includes(view)
       ? call("/api/platform/capabilities")
       : Promise.resolve({}),
+    view === "reconciliations" && S.reconciliationId
+      ? accountingUI.load(root, S.reconciliationId)
+      : Promise.resolve(null),
   ]);
   if (!current()) return;
   S.overview = overview;
@@ -230,6 +239,7 @@ async function refresh() {
   S.agentCatalogue = agents;
   S.agentKeys = agentKeys;
   S.capabilities = capabilities;
+  S.reconciliation = reconciliation;
   $("#mode-banner").textContent =
     `${S.config.environment} · ${S.overview.institution.mode === "sandbox" ? "Sandbox: simulated funds and internal ledger transfers." : "Live institution"} · ${S.overview.institution.status === "paused" ? "Operations paused" : "Controls active"}`;
   render();
@@ -244,6 +254,8 @@ function renderAuth() {
   S.agentCatalogue = [];
   S.agentKeys = [];
   S.capabilities = {};
+  S.reconciliation = null;
+  S.reconciliationId = null;
   $("#identity").textContent = "Signed out";
   $("#logout").hidden = true;
   $("#institution").innerHTML =
@@ -334,9 +346,14 @@ function render() {
     audit: renderAudit,
     agents: agentUI.renderAgents,
     runs: agentUI.renderRuns,
+    reconciliations: accountingUI.render,
   };
   $("#content").innerHTML = views[S.page]();
-  if (S.cursor && !["overview", "accounts"].includes(S.page))
+  if (
+    S.cursor &&
+    !["overview", "accounts"].includes(S.page) &&
+    !(S.page === "reconciliations" && S.reconciliationId)
+  )
     $("#content").insertAdjacentHTML(
       "beforeend",
       '<button class="pagination" data-action="load-more">Load more records</button>',
@@ -426,7 +443,7 @@ function renderActions() {
         : "",
     ) +
     (records.length
-      ? `<div class="toolbar"><input id="operation-search" type="search" placeholder="Filter by purpose or account" aria-label="Filter operations"><select id="operation-status" aria-label="Filter by status"><option value="">All statuses</option>${["pending", "settled", "blocked", "cancelled", "declined", "expired"].map((x) => `<option value="${x}">${x}</option>`).join("")}</select></div><div class="list">${records.map((a) => `<article class="card operation" data-status="${h(a.status)}" data-search="${h((a.purpose + " " + a.source_name + " " + a.destination_name).toLowerCase())}"><header><div><span class="eyebrow">${h(a.kind.replaceAll("_", " "))} · ${h(date(a.created_at))}</span><h2>${h(money(a.amount, a.currency))} <small>→ ${h(a.destination_name)}</small></h2><p>${h(a.purpose)}</p><small>From ${h(a.source_name)} · ${h(a.approvals.length)} approval(s)${a.status === "pending" ? " · expires " + h(date(a.expires_at)) : ""}</small></div>${badge(a.status)}</header><details class="detail"><summary>Inspect policy checks and decision</summary>${a.checks.map((c) => `<div class="check"><span>${h(c.rule)}</span>${badge(c.result)}</div>`).join("")}<p class="mono">Action ${h(a.id)}<br>Policy ${h(a.policy_id)}</p>${a.close_reason ? `<p>${h(a.close_reason)}</p>` : ""}${a.approvals.map((x) => `<p><small>${h(x.sub)} · ${h(date(x.timestamp))}</small><br>${h(x.reason)}</p>`).join("")}</details>${a.status === "pending" ? `<div class="actions detail">${a.proposed_by !== S.user.sub && a.initiated_by !== S.user.sub && can("action_approve") ? actionButton("action-approve", "Approve", a.id, "primary") + actionButton("action-decline", "Decline", a.id, "danger") : ""}${can("action_cancel") && (a.proposed_by === S.user.sub || a.initiated_by === S.user.sub || ["owner", "administrator"].includes(S.overview.membership.role)) ? actionButton("action-cancel", "Cancel request", a.id) : ""}${a.expires_at * 1000 <= Date.now() ? actionButton("action-expire", "Release expired request", a.id) : ""}${a.proposed_by === S.user.sub || a.initiated_by === S.user.sub ? "<small>A different authorised person must approve this request.</small>" : ""}</div>` : ""}</article>`).join("")}</div>`
+      ? `<div class="toolbar"><input id="operation-search" type="search" placeholder="Filter by purpose or account" aria-label="Filter operations"><select id="operation-status" aria-label="Filter by status"><option value="">All statuses</option>${["pending", "settled", "blocked", "cancelled", "declined", "expired"].map((x) => `<option value="${x}">${x}</option>`).join("")}</select></div><div class="list">${records.map((a) => `<article class="card operation" data-status="${h(a.status)}" data-search="${h((a.purpose + " " + a.source_name + " " + a.destination_name).toLowerCase())}"><header><div><span class="eyebrow">${h(a.kind.replaceAll("_", " "))} · ${h(date(a.created_at))}</span><h2>${h(money(a.amount, a.currency))} <small>→ ${h(a.destination_name)}</small></h2><p>${h(a.purpose)}</p>${a.reversal_of ? `<p class="hint">Reverses journal ${a.reversal_of.sequence}. The original entry is retained.</p>` : ""}<small>From ${h(a.source_name)} · ${h(a.approvals.length)} approval(s)${a.status === "pending" ? " · expires " + h(date(a.expires_at)) : ""}</small></div>${badge(a.status)}</header><details class="detail"><summary>Inspect policy checks and decision</summary>${a.checks.map((c) => `<div class="check"><span>${h(c.rule)}</span>${badge(c.result)}</div>`).join("")}<p class="mono">Action ${h(a.id)}<br>Policy ${h(a.policy_id)}</p>${a.close_reason ? `<p>${h(a.close_reason)}</p>` : ""}${a.approvals.map((x) => `<p><small>${h(x.sub)} · ${h(date(x.timestamp))}</small><br>${h(x.reason)}</p>`).join("")}</details>${a.status === "pending" ? `<div class="actions detail">${a.proposed_by !== S.user.sub && a.initiated_by !== S.user.sub && can("action_approve") ? actionButton("action-approve", "Approve", a.id, "primary") + actionButton("action-decline", "Decline", a.id, "danger") : ""}${can("action_cancel") && (a.proposed_by === S.user.sub || a.initiated_by === S.user.sub || ["owner", "administrator"].includes(S.overview.membership.role)) ? actionButton("action-cancel", "Cancel request", a.id) : ""}${a.expires_at * 1000 <= Date.now() ? actionButton("action-expire", "Release expired request", a.id) : ""}${a.proposed_by === S.user.sub || a.initiated_by === S.user.sub ? "<small>A different authorised person must approve this request.</small>" : ""}</div>` : ""}</article>`).join("")}</div>`
       : empty(
           "No operations yet",
           "Propose a transfer between two asset accounts.",
@@ -484,7 +501,7 @@ function renderJournal() {
                   (p) =>
                     `<tr><td>${h(S.accounts.find((a) => a.id === p.account_id)?.name || p.account_id)}</td><td>${h(p.currency)}</td><td>${p.debit ? h(money(p.debit, p.currency)) : "—"}</td><td>${p.credit ? h(money(p.credit, p.currency)) : "—"}</td></tr>`,
                 ),
-              )}</div></section>`,
+              )}${j.reversal_of ? `<p class="hint">Reverses journal ${j.reversal_of.sequence}. The original entry remains intact.</p>` : can("reversal_propose") ? `<div class="actions detail">${actionButton("journal-reverse", "Request reversal", String(j.sequence))}</div>` : ""}${jsonDetails(j, "Journal identifiers and source record")}</div></section>`,
           )
           .join("")}</div>`
       : empty(
@@ -688,6 +705,27 @@ async function act(action, id) {
     );
   if (!S.overview) throw new Error("Sign in and select an institution first.");
   if (action.startsWith("agent-")) return agentUI.act(action, id);
+  if (action.startsWith("recon-")) return accountingUI.act(action, id);
+  if (action === "journal-reverse")
+    return form(
+      "Request journal reversal",
+      `Journal ${id}. This proposes a full, linked correction and reserves the funds needed. Current policy controls apply and a different person must approve.`,
+      reason("Correction reason"),
+      (fd) =>
+        command("reversal_propose", {
+          journal_sequence: Number(id),
+          reason: fd.get("reason"),
+        }),
+      "Request reversal",
+      async () => {
+        S.page = "actions";
+        try {
+          await refresh();
+        } catch (e) {
+          notice(e.message, true);
+        }
+      },
+    );
   if (action === "account-create")
     return form(
       "Create account",
@@ -785,16 +823,19 @@ async function act(action, id) {
       "action-expire",
     ].includes(action)
   ) {
+    const operation = S.records.find((x) => x.id === id);
     const label = {
       "action-approve": "Approve transfer",
       "action-decline": "Decline transfer",
       "action-cancel": "Cancel transfer",
       "action-expire": "Release expired request",
-    }[action];
-    const operation = S.records.find((x) => x.id === id);
+    }[action].replace(
+      "transfer",
+      operation.reversal_of ? "correction" : "transfer",
+    );
     return form(
       label,
-      `${money(operation.amount, operation.currency)} from ${operation.source_name} to ${operation.destination_name}. Current roles, balances and policies are checked before execution.`,
+      `${money(operation.amount, operation.currency)} from ${operation.source_name} to ${operation.destination_name}.${operation.reversal_of ? ` Reverses journal ${operation.reversal_of.sequence}; the original entry is retained.` : ""} Current roles, balances and policies are checked before execution.`,
       reason("Decision reason"),
       (fd) =>
         command(action.replaceAll("-", "_"), {
@@ -802,7 +843,10 @@ async function act(action, id) {
           reason: fd.get("reason"),
         }),
       label,
-      (r) => notice(`Transfer ${r.action.status}.`),
+      (r) =>
+        notice(
+          `${r.action.reversal_of ? "Correction" : "Transfer"} ${r.action.status}.`,
+        ),
     );
   }
   if (action === "policy-create") {
@@ -975,6 +1019,7 @@ $("#institution").addEventListener("change", async (event) => {
     return;
   }
   S.tenant = event.target.value;
+  S.reconciliationId = null;
   S.page = "overview";
   try {
     await refresh();
@@ -1044,13 +1089,44 @@ const agentUI = createAgentUI({
   notice,
   refresh,
 });
+const accountingUI = createAccountingUI({
+  S,
+  h,
+  can,
+  badge,
+  heading,
+  empty,
+  table,
+  actionButton,
+  field,
+  select,
+  reason,
+  jsonDetails,
+  money,
+  date,
+  openForm,
+  command,
+  call,
+  base,
+  notice,
+  refresh,
+  render,
+});
 let polling = false;
 setInterval(async () => {
+  const activeRuns =
+    S.page === "runs" &&
+    S.records.some((r) => ["queued", "running"].includes(r.status));
+  const activeComparisons =
+    S.page === "reconciliations" &&
+    (S.reconciliation
+      ? ["queued", "reconciling"].includes(S.reconciliation.record.status)
+      : S.records.some((r) => ["queued", "reconciling"].includes(r.status)));
   if (
     polling ||
     document.hidden ||
     !S.user ||
-    S.page !== "runs" ||
+    !(activeRuns || activeComparisons) ||
     $("#dialog").open ||
     $("#content details[open]")
   )
