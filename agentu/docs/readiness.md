@@ -9,13 +9,13 @@ The requested end state is the full platform. The work below is verified progres
 - Server-side policy engine with integer money values, fixed mandates, hard-limit precedence and rechecks at approval.
 - Idempotency, atomic state updates and user/workspace isolation.
 - Local rehearsal server and Windows launcher.
-- 113 automated tests covering the demo, institution service, version-checked storage, HTTP authentication and export verification.
+- 125 automated tests covering the demo, institution service, version-checked storage, HTTP authentication, export verification and signed evidence handling.
 - Browser checks: allowed sweep, blocked destination and approval produce the expected balances and 10 linked audit events.
 - JavaScript syntax checks and CloudFormation schema/lint validation pass.
 - Allowlisted static build and Lambda package.
 - Infrastructure templates for separate AWS sandbox, demo, staging and production stacks in the designated account, with required authenticator-app MFA and deletion protection.
 - CI checks, OIDC release workflow, narrow release-role setup, and deployment/rollback instructions.
-- Work is saved on the business branch for W3C draft pull request #1. The CI workflow runs all 113 tests, JavaScript checks and CloudFormation validation; check its result against the current commit before deployment.
+- Work is saved on the business branch for W3C draft pull request #1. The CI workflow runs all 125 tests, JavaScript checks and CloudFormation validation; check its result against the current commit before deployment.
 - All four GitHub release environments created with branch restrictions; staging and production allow only `main`. AWS role attachment remains pending.
 - Founder walkthrough for Tuesday 8 September.
 - Operational application at `/agentu/app/`: onboarding, institutions, accounts, funding, operations, policies, team access, ledger and audit.
@@ -54,6 +54,13 @@ The requested end state is the full platform. The work below is verified progres
 - A read-only inspector checks actual resource bindings, identity settings, the complete JWT route inventory, data protection and private website origins before release. Conditional Lambda revisions and matching API/worker hashes protect publication.
 - Tests reject cross-environment references, identity/data/API drift, mixed packages and failed updates. AWS response fields are checked against the installed SDK schemas. No actual hosted configuration inspection or MFA enrollment is claimed. See `environments.md`.
 
+## Signed evidence verification
+
+- Operator tooling cross-checks matching audit/journal snapshots, pins an independently supplied public key, requests KMS signing and verifies the signature offline. Exact export bytes and environment/institution/head identifiers are covered by the signed manifest.
+- Each environment template adds a retained RSA-3072 signing key, private versioned archive with 30-day governance retention and an unattached operator policy. Application and release roles receive no signing or archive permission.
+- Tests perform real RSA-PSS signing and verification with ephemeral fictional keys, and reject altered signatures/files, mixed institutions or snapshots, coordinated journal changes and wrong trust records. Archive tests verify exact versions, checksums, uncertain-upload retries, retention and downloaded packets. AWS transports are mocked.
+- The actual local 45-event audit and five-journal exports pass the new paired consistency check. They have not been signed with AWS. Hosted signing/archive/download, operator assignment and automatic checkpoint delivery remain outstanding. See `evidence.md`.
+
 ## Local recovery verification
 
 - Consistent platform backups, independent whole-database integrity checks and quarantined restore copies are implemented. Recovery HTTP rejects domain changes, copied sessions expire, and the worker remains stopped.
@@ -68,10 +75,11 @@ The requested end state is the full platform. The work below is verified progres
 - DynamoDB concurrency and isolation tests against the deployed service.
 - Private S3 / CloudFront checks and an actual GitHub OIDC release.
 - Budget notifications, monitoring recipient and hosted restore rehearsal.
+- Designated evidence operator, trusted key confirmation and a real sign/archive/download drill.
 - Updated public website cutover to the verified demo environment.
 
 The latest AWS inspection showed the IAM sign-in page with account `032312375271` populated and username/password empty. No command-line AWS profiles were available. The infrastructure is prepared and has not been deployed.
 
 ## Intentional boundaries
 
-The company is not yet incorporated. The treasury rule is deterministic automation; no real AI model invocation, financial integration or live-money execution has been verified. The Bedrock adapter is implemented and mock-tested. The audit chain is hash-linked but not externally signed or immutable against administrators. Real model verification, beneficiary/provider execution, authenticated provider reconciliation, evidence anchoring, deployed staging/production verification and tested hosted recovery remain unfinished. Local verification of the platform controls does not establish production readiness.
+The company is not yet incorporated. The treasury rule is deterministic automation; no real AI model invocation, financial integration or live-money execution has been verified. The Bedrock adapter is implemented and mock-tested. The audit chain is hash-linked; operator signing tooling is built and tested, but no AWS signature or automatic anchoring is claimed. Signatures cover supplied snapshots and do not authenticate banks, establish recency or prevent later database rewrites. Real model verification, beneficiary/provider execution, authenticated provider reconciliation, hosted evidence assurance, deployed staging/production verification and tested hosted recovery remain unfinished. Local verification of the platform controls does not establish production readiness.

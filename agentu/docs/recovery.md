@@ -34,7 +34,7 @@ Stop the inspection process when finished. The tooling retains the source, backu
 
 ## Hosted recovery remains to be verified
 
-The AWS platform table already enables point-in-time recovery and retention. AWS [restores into a new table](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/pointintimerecovery_restores.html); a table restore alone does not restore the complete service. Restore settings including IAM policies, monitoring, tags, deletion protection and PITR need explicit attention.
+The AWS platform-table template enables point-in-time recovery and retention; the table has not been deployed. AWS [restores into a new table](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/pointintimerecovery_restores.html); a table restore alone does not restore the complete service. Restore settings including IAM policies, monitoring, tags, deletion protection and PITR need explicit attention.
 
 The hosted drill must use account `032312375271`, London, and record all of the following before it is considered complete:
 

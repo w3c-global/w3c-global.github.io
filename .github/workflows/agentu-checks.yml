@@ -22,5 +22,6 @@ jobs:
       - run: python -m unittest discover -s agentu/tests -v
       - run: node --check agentu/site.js && node --check agentu/demo/app.js && node --check agentu/demo/auth.js && node --check agentu/app/app.js && node --check agentu/app/agents.js && node --check agentu/app/accounting.js && node --check agentu/app/statement.js
       - run: node agentu/tests/test_statement.mjs
+      - run: node --check agentu/scripts/verify_signature.mjs
       - run: python agentu/scripts/build.py
       - run: cfn-lint .build/template.json

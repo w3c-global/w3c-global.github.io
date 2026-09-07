@@ -6,7 +6,7 @@ Agentu is a **pre-incorporation venture** building financial controls for AI. Th
 
 - Canonical source: `w3c-global/w3c-global.github.io`, under `agentu/`.
 - Deployment account authorised by the user: `032312375271`.
-- AWS region: London (`eu-west-2`). Separate `agentu-sandbox` and `agentu-demo` stacks.
+- AWS region: London (`eu-west-2`). Separate sandbox, demo, staging and production stacks.
 - No personal GitHub repository, AWS account or email destination is used by this build.
 - No real bank accounts, funds, customer data, LLM calls or payment integrations.
 
@@ -24,9 +24,11 @@ The three scenarios cover an allowed £75,000 treasury sweep, a blocked £25,000
 
 ## Validate
 
+The complete test suite also requires Node.js 22 or later and the Python tooling requirements below.
+
 ```powershell
-python -m unittest discover -s agentu/tests -v
 python -m pip install -r agentu/requirements-tools.txt
+python -m unittest discover -s agentu/tests -v
 python agentu/scripts/build.py
 cfn-lint .build/template.json
 node --check agentu/site.js
@@ -35,6 +37,7 @@ node --check agentu/demo/auth.js
 node --check agentu/app/app.js
 node --check agentu/app/agents.js
 node --check agentu/app/accounting.js
+node --check agentu/scripts/verify_signature.mjs
 node agentu/tests/test_statement.mjs
 ```
 
@@ -56,6 +59,7 @@ See [Platform operation and API guide](docs/platform-operations.md) and [full co
 - [Readiness record](docs/readiness.md)
 - [AWS operations and release guide](docs/aws-operations.md)
 - [Architecture and limits](docs/architecture.md)
+- [Signed evidence snapshots](docs/evidence.md)
 
 Hosted sessions require invited Cognito users and use DynamoDB with atomic conditional writes. Browser sign-in uses the OAuth authorisation-code flow with PKCE. GitHub releases use short-lived OIDC credentials and an environment-specific release role; infrastructure creation remains a separate operation.
 
@@ -63,7 +67,7 @@ The enquiry form prepares an email to `frankie@w3c.com`. The visitor reviews and
 
 ## Evidence boundary
 
-The audit records form a SHA-256 hash chain. Verification detects inconsistent contents, ordering or links. It is **not** independently anchored, externally signed or immutable against a privileged administrator. Financial operations use simulated funds and internal ledger postings. Real model invocation, bank execution, authenticated provider statements, evidence signing, production infrastructure and operational assurance remain outstanding in the full completion record.
+The audit records form a SHA-256 hash chain. Verification detects inconsistent contents, ordering or links. Operator tooling can seal matching exports with a separately trusted KMS key, verify the signature offline and archive an exact retained version. Its cryptography is tested; the AWS calls are mock-tested and no deployed signature or archive is claimed. Database writes are not automatically anchored, and a signature does not authenticate a bank or establish that a snapshot is the latest one. Financial operations use simulated funds and internal ledger postings. Real model invocation, bank execution, authenticated provider statements, hosted evidence signing, production infrastructure and operational assurance remain outstanding in the full completion record.
 
 Agent operation, credential integration, worker behavior and model configuration are documented in [Governed agents](docs/agents.md). The treasury rule runs locally; the Bedrock adapter requires a verified business AWS account and model before it can be exercised live.
 

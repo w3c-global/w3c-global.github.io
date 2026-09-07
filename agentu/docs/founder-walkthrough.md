@@ -34,6 +34,8 @@ Inspect an earlier action. Select **Verify record chain** and **Export audit**. 
 
 Be exact about the proof: this checks internal consistency of the hash chain. It is not a blockchain, an external signature, an immutable archive or a regulatory certification.
 
+The operations platform also has [operator signing and archive tooling](evidence.md), tested with real ephemeral RSA signatures and simulated AWS responses. It has not yet sealed the rehearsal records with AWS. Present it as built tooling awaiting deployment and an operational drill; the browser's verification button checks the record chain only.
+
 ## 6. Show the operational product and agent — 5 minutes
 
 Open `/agentu/app/` and the prepared fictional verification institution. Show Accounts, Team & access, Policies and the balanced Ledger. These pages use the durable institution service.

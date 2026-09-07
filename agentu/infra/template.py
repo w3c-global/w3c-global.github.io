@@ -18,6 +18,31 @@ def template():
     work_delete = {"Effect": "Allow", "Action": "dynamodb:DeleteItem", "Resource": A("PlatformRecords"),
                    "Condition": {"ForAllValues:StringEquals": {"dynamodb:LeadingKeys": ["WORK#platform"]}}}
 
+    add("EvidenceKey", "AWS::KMS::Key", {
+        "Description": S("Agentu ${Stage} operator-sealed evidence snapshots"), "KeySpec": "RSA_3072", "KeyUsage": "SIGN_VERIFY", "Enabled": True,
+        "KeyPolicy": {"Version": "2012-10-17", "Statement": [{"Sid": "BusinessAccountAdministration", "Effect": "Allow", "Principal": {"AWS": S("arn:${AWS::Partition}:iam::${AWS::AccountId}:root")}, "Action": "kms:*", "Resource": "*"}]},
+        "Tags": [{"Key": "Project", "Value": "Agentu"}, {"Key": "Environment", "Value": R("Stage")}]},
+        DeletionPolicy="Retain", UpdateReplacePolicy="Retain")
+    add("EvidenceBucket", "AWS::S3::Bucket", {
+        "BucketName": S("agentu-${Stage}-evidence-${AWS::AccountId}-${AWS::Region}"),
+        "PublicAccessBlockConfiguration": {"BlockPublicAcls": True, "BlockPublicPolicy": True, "IgnorePublicAcls": True, "RestrictPublicBuckets": True},
+        "OwnershipControls": {"Rules": [{"ObjectOwnership": "BucketOwnerEnforced"}]},
+        "BucketEncryption": {"ServerSideEncryptionConfiguration": [{"ServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}]},
+        "VersioningConfiguration": {"Status": "Enabled"}, "ObjectLockEnabled": True,
+        "ObjectLockConfiguration": {"ObjectLockEnabled": "Enabled", "Rule": {"DefaultRetention": {"Mode": "GOVERNANCE", "Days": 30}}},
+        "Tags": [{"Key": "Project", "Value": "Agentu"}, {"Key": "Environment", "Value": R("Stage")}]},
+        DeletionPolicy="Retain", UpdateReplacePolicy="Retain")
+    add("EvidenceBucketPolicy", "AWS::S3::BucketPolicy", {"Bucket": R("EvidenceBucket"), "PolicyDocument": {"Version": "2012-10-17", "Statement": [
+        {"Effect": "Deny", "Principal": "*", "Action": "s3:*", "Resource": [A("EvidenceBucket"), S("${EvidenceBucket.Arn}/*")], "Condition": {"Bool": {"aws:SecureTransport": "false"}}}]}})
+    add("EvidenceOperatorPolicy", "AWS::IAM::ManagedPolicy", {
+        "ManagedPolicyName": S("agentu-${Stage}-evidence-operator"), "Description": "Seal and archive snapshots; no financial writes, archive deletion or retention bypass",
+        "PolicyDocument": {"Version": "2012-10-17", "Statement": [
+            {"Effect": "Allow", "Action": "cloudformation:DescribeStacks", "Resource": R("AWS::StackId")},
+            {"Effect": "Allow", "Action": ["kms:DescribeKey", "kms:GetPublicKey"], "Resource": A("EvidenceKey")},
+            {"Effect": "Allow", "Action": "kms:Sign", "Resource": A("EvidenceKey"), "Condition": {"StringEquals": {"kms:SigningAlgorithm": "RSASSA_PSS_SHA_256"}}},
+            {"Effect": "Allow", "Action": ["s3:GetBucketVersioning", "s3:GetBucketPublicAccessBlock", "s3:GetBucketObjectLockConfiguration"], "Resource": A("EvidenceBucket")},
+            {"Effect": "Allow", "Action": ["s3:PutObject", "s3:GetObject", "s3:GetObjectVersion", "s3:GetObjectRetention"], "Resource": S("${EvidenceBucket.Arn}/sealed/*")}]}})
+
     add("Records", "AWS::DynamoDB::Table", {
         "TableName": S("agentu-${Stage}-records"), "BillingMode": "PAY_PER_REQUEST", "DeletionProtectionEnabled": True,
         "AttributeDefinitions": [{"AttributeName": "pk", "AttributeType": "S"}],
@@ -159,6 +184,7 @@ def template():
             "Conditions": {"EnableBedrock": {"Fn::Not": [{"Fn::Equals": [R("BedrockModelArn"), ""]}]}},
             "Resources": resources, "Outputs": {
                 "Environment": {"Value": R("Stage")}, "DeploymentContract": {"Value": CONTRACT},
+                "EvidenceKeyArn": {"Value": A("EvidenceKey")}, "EvidenceBucket": {"Value": R("EvidenceBucket")}, "EvidenceOperatorPolicyArn": {"Value": R("EvidenceOperatorPolicy")},
                 "WebsiteUrl": {"Value": S("https://${Distribution.DomainName}/agentu/")}, "DemoUrl": {"Value": S("https://${Distribution.DomainName}/agentu/demo/")}, "AppUrl": {"Value": S("https://${Distribution.DomainName}/agentu/app/")},
                 "DistributionId": {"Value": R("Distribution")}, "WebBucket": {"Value": R("WebBucket")},
                 "UserPoolId": {"Value": R("UserPool")}, "UserPoolClientId": {"Value": R("UserPoolClient")},

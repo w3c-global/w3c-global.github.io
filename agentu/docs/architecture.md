@@ -20,7 +20,7 @@ flowchart LR
   Worker --> Logs
 ```
 
-Separate sandbox and demo stacks use separate S3 buckets, user pools, Lambda functions, API gateways, data tables and logs in account `032312375271`, London. There is no VPC or always-on application server in this design.
+Separate sandbox, demo, staging and production stack definitions use separate S3 buckets, user pools, Lambda functions, API gateways, data tables, evidence keys and logs in account `032312375271`, London. These resources have not yet been deployed. There is no VPC or always-on application server in this design.
 
 Human state routes require a Cognito access token with the `openid` scope. The API Gateway JWT authoriser validates issuer and client; the function also rejects a missing authenticated subject. Records are keyed by that subject plus the rehearsal identifier, never by an identity supplied in the request body.
 
@@ -32,11 +32,13 @@ Amounts are positive integer pence. Destination and policy values come from the 
 
 Each mutation uses an idempotency key. Replays with the same payload return existing state. Reusing a key with different input is rejected. Decisions, balance changes and audit events are saved in one conditionally written DynamoDB document. Concurrent conflicts reload and retry; a request never partially updates balances independently of the record.
 
-The deliberately small demo bounds each session to approximately 240 audit records and caps the document below DynamoDB’s item-size limit. Use a new rehearsal for additional runs. DynamoDB TTL is seven days after mutation; expired sessions are inaccessible immediately even when physical TTL deletion is pending. Point-in-time recovery may retain earlier versions longer. Website object versions are retained for 30 days after replacement. Operational logs are retained for 14 days.
+The deliberately small demo bounds each session to approximately 240 audit records and caps the document below DynamoDB’s item-size limit. Use a new rehearsal for additional runs. DynamoDB TTL is seven days after mutation; expired sessions are inaccessible immediately even when physical TTL deletion is pending. Point-in-time recovery may retain earlier versions longer. Website object versions have a 30-day expiry after replacement. Operational log retention is configured for 30 days in sandbox/demo and 90 days in staging/production.
 
 ## Evidence
 
 Each event stores a sequence, UTC timestamp, previous hash and SHA-256 hash of its canonical JSON content. The server and standalone Python verifier check the chain. An administrator who can rewrite every record can generate a new consistent chain; there is no external anchor. Do not describe this as an immutable or cryptographically attested financial ledger.
+
+The operator evidence CLI verifies a matching audit/journal pair, signs its exact file digests with an environment-specific RSA-3072 KMS key and checks the signature independently. A separate public-key pin establishes trust. Archive writes use private versioned S3 storage with 30-day governance retention and verify the exact returned version before producing a receipt. The operator policy is unattached; application and release identities receive no signing permission. This is optional snapshot tooling, not automatic database anchoring or source authentication. Real cryptography is tested, AWS transports are mocked and hosted signing/retention remains unverified. See [Signed evidence snapshots](evidence.md).
 
 ## Local rehearsal
 
@@ -70,4 +72,4 @@ The independent database verifier reconstructs balances, reservations and usage,
 
 ## Before live financial use
 
-Not implemented or verified: real AI/model execution, bank/payment integrations, beneficiary onboarding, regulated custody/payment operations, independent evidence signing, authenticated provider statement reconciliation, deployed multi-tenant security verification, production environment/recovery, external penetration testing, incident-response ownership and service commitments. The full requirement record remains open in `platform-scope.md`.
+Not implemented or verified: real AI/model execution, bank/payment integrations, beneficiary onboarding, regulated custody/payment operations, hosted evidence signing and automatic checkpoint delivery, authenticated provider statement reconciliation, deployed multi-tenant security verification, production environment/recovery, external penetration testing, incident-response ownership and service commitments. The full requirement record remains open in `platform-scope.md`.
