@@ -70,3 +70,5 @@ Agent operation, credential integration, worker behavior and model configuration
 [Corrections and reconciliation](docs/accounting.md) covers independently approved full journal reversals, batched statement imports, fixed ledger snapshots, exception investigation and comparison export verification. Supplied statements remain explicitly unauthenticated until a provider integration is verified.
 
 Existing institutions: follow [the ordered-history upgrade](docs/history-upgrade.md) before using this version. New institutions initialize it automatically.
+
+Backups and restoration: [Platform backup and recovery](docs/recovery.md), including a verified local restore drill and the outstanding hosted recovery requirements.

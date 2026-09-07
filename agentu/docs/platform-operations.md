@@ -70,3 +70,5 @@ The current service posts internal sandbox transfers and includes governed agent
 References: [Cognito GetUser](https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_GetUser.html), [DynamoDB transaction permissions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis-iam.html), [DynamoDB transactions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html).
 
 The ledger now supports governed full reversals and the application compares supplied statements with fixed ledger snapshots. Reconciliation never posts an automatic balancing entry; outstanding differences require explicit independent acceptance and remain visible.
+
+For backups, independent database checks and a quarantined inspection copy, use [Platform backup and recovery](recovery.md). Recovery mode disables platform writes and worker execution, expires copied sessions and keeps the operating database separate.

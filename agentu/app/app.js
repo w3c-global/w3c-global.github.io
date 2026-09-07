@@ -194,10 +194,11 @@ async function refresh() {
         )
         .join("")
     : '<option value="">No institution yet</option>';
-  $("#institution").insertAdjacentHTML(
-    "beforeend",
-    '<option value="new">＋ Create institution</option>',
-  );
+  if (!S.config.readOnly)
+    $("#institution").insertAdjacentHTML(
+      "beforeend",
+      '<option value="new">＋ Create institution</option>',
+    );
   if (!S.tenant) return renderOnboarding();
   sessionStorage.setItem("agentu.institution", S.tenant);
   const root = base(),
@@ -237,6 +238,7 @@ async function refresh() {
   ]);
   if (!current()) return;
   S.overview = overview;
+  if (S.config.readOnly) S.overview.permissions = [];
   S.accounts = accounts;
   S.records = collection.items;
   S.cursor = collection.next_cursor;
@@ -247,11 +249,12 @@ async function refresh() {
   S.capabilities = capabilities;
   S.reconciliation = reconciliation;
   $("#mode-banner").textContent =
-    `${S.config.environment} · ${S.overview.institution.mode === "sandbox" ? "Sandbox: simulated funds and internal ledger transfers." : "Live institution"} · ${S.overview.institution.status === "paused" ? "Operations paused" : "Controls active"}`;
+    `${S.config.environment} · ${S.overview.institution.mode === "sandbox" ? "Sandbox: simulated funds and internal ledger transfers." : "Live institution"} · ${S.config.readOnly ? "Changes and background execution paused" : S.overview.institution.status === "paused" ? "Operations paused" : "Controls active"}`;
   render();
 }
 
 function renderAuth() {
+  if (S.config.readOnly) S.authRegister = false;
   loadVersion++;
   S.overview = null;
   S.records = [];
@@ -285,7 +288,8 @@ function renderAuth() {
   }
   const isLocal = S.config.mode === "local";
   $("#content").innerHTML =
-    `<section class="intro-panel"><span class="eyebrow">YOUR INSTITUTION. YOUR CONTROLS.</span><h1>A workspace for<br>accountable operations.</h1><p class="muted">Connect the people, policies and accounts behind every decision.</p><div class="card auth-grid"><div class="auth-copy"><div class="number">→</div><h2>Every action has a mandate.</h2><p class="muted">Create an institution, invite independent reviewers and run treasury operations with a traceable ledger.</p><p class="hint">${isLocal ? "Local development uses separate user accounts on this computer. Email ownership is assumed here. Use development credentials." : "Sign in with your invited Agentu identity. Your institution controls determine what you can do."}</p></div><div>${isLocal ? `<h2>${S.authRegister ? "Create a local account" : "Welcome back"}</h2><form id="auth-form">${field("email", "Email", "email", "", "", 'autocomplete="username" maxlength="254"')}${field("password", "Password", "password", "", "At least 12 characters.", `minlength="12" maxlength="128" autocomplete="${S.authRegister ? "new-password" : "current-password"}"`)}<button class="primary" type="submit">${S.authRegister ? "Create account" : "Sign in"}</button></form><button class="quiet" data-action="auth-toggle">${S.authRegister ? "Already registered? Sign in" : "Create a development account"}</button>` : '<h2>Secure sign-in</h2><p class="muted">Continue through the Agentu identity service.</p><button class="primary" data-action="hosted-signin">Sign in to Agentu ↗</button>'}</div></div></section>`;
+    `<section class="intro-panel"><span class="eyebrow">YOUR INSTITUTION. YOUR CONTROLS.</span><h1>A workspace for<br>accountable operations.</h1><p class="muted">Connect the people, policies and accounts behind every decision.</p><div class="card auth-grid"><div class="auth-copy"><div class="number">→</div><h2>Every action has a mandate.</h2><p class="muted">Create an institution, invite independent reviewers and run treasury operations with a traceable ledger.</p><p class="hint">${S.config.readOnly ? "Inspect a restored copy using an existing development identity. Changes and background execution are paused." : isLocal ? "Local development uses separate user accounts on this computer. Email ownership is assumed here. Use development credentials." : "Sign in with your invited Agentu identity. Your institution controls determine what you can do."}</p></div><div>${isLocal ? `<h2>${S.authRegister ? "Create a local account" : "Welcome back"}</h2><form id="auth-form">${field("email", "Email", "email", "", "", 'autocomplete="username" maxlength="254"')}${field("password", "Password", "password", "", "At least 12 characters.", `minlength="12" maxlength="128" autocomplete="${S.authRegister ? "new-password" : "current-password"}"`)}<button class="primary" type="submit">${S.authRegister ? "Create account" : "Sign in"}</button></form><button class="quiet" data-action="auth-toggle">${S.authRegister ? "Already registered? Sign in" : "Create a development account"}</button>` : '<h2>Secure sign-in</h2><p class="muted">Continue through the Agentu identity service.</p><button class="primary" data-action="hosted-signin">Sign in to Agentu ↗</button>'}</div></div></section>`;
+  if (S.config.readOnly) $('[data-action="auth-toggle"]')?.remove();
   $("#auth-form")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget,
@@ -310,6 +314,14 @@ function renderAuth() {
   });
 }
 function renderOnboarding() {
+  if (S.config.readOnly) {
+    $("#content").innerHTML = heading(
+      "Recovery inspection",
+      "No institution in this snapshot",
+      "This restored copy is for inspection. Changes and background execution are paused.",
+    );
+    return;
+  }
   $("#content").innerHTML =
     heading(
       "Get started",
@@ -620,6 +632,7 @@ function showInvitation(result) {
   $("#dialog-submit").hidden = true;
 }
 async function acceptPendingInvite() {
+  if (S.config.readOnly) return;
   const pending = sessionStorage.getItem("agentu.invite");
   if (!pending) return;
   try {
@@ -1170,6 +1183,7 @@ async function start() {
   }
   S.config = await (await fetch("./config.json", { cache: "no-store" })).json();
   $("#environment").textContent = S.config.environment;
+  if (S.config.readOnly) $('a[href="../demo/"]')?.remove();
   if (S.config.mode === "unconfigured") return renderAuth();
   if (S.config.mode === "hosted") {
     await finishSignIn(S.config);

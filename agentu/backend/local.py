@@ -1,5 +1,6 @@
 """Local rehearsal: python agentu/backend/local.py --port 4321. Loopback only."""
 import argparse
+import hashlib
 import json
 import threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -29,7 +30,8 @@ class Server(SimpleHTTPRequestHandler):
         if path.startswith("/api/"):
             return self.api("GET")
         if path in ("/agentu/demo/config.json", "/agentu/app/config.json"):
-            data = json.dumps({"mode": "local", "apiBase": "", "environment": "Local development"}).encode()
+            recovery = getattr(self.server, "recovery_mode", False)
+            data = json.dumps({"mode": "local", "apiBase": "", "environment": "Recovery inspection" if recovery else "Local development", "readOnly": recovery}).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Cache-Control", "no-store")
@@ -71,7 +73,11 @@ class Server(SimpleHTTPRequestHandler):
         event = {"rawPath": parsed.path, "rawQueryString": parsed.query, "headers": dict(self.headers), "body": body,
                  "requestContext": {"http": {"method": method}}}
         try:
-            if parsed.path.startswith("/api/platform-auth/"):
+            recovery = getattr(self.server, "recovery_mode", False)
+            allowed_recovery = (method == "GET" and parsed.path.startswith("/api/platform/")) or (method == "POST" and parsed.path in ("/api/platform-auth/login", "/api/platform-auth/logout"))
+            if recovery and not allowed_recovery:
+                result = response(403, {"error": "This restored copy is for inspection. Changes and background execution are paused.", "code": "recovery_read_only"})
+            elif parsed.path.startswith("/api/platform-auth/"):
                 if method != "POST":
                     result = response(405, {"error": "Use POST."})
                 elif parsed.path in ("/api/platform-auth/login", "/api/platform-auth/register"):
@@ -87,6 +93,10 @@ class Server(SimpleHTTPRequestHandler):
                 result = self.server.agents.handle(event)
             elif parsed.path.startswith("/api/platform/"):
                 result = self.server.platform.handle(event, self.server.auth.actor(dict(self.headers)))
+                if recovery and method == "GET" and parsed.path.endswith("/overview") and result["statusCode"] == 200:
+                    value = json.loads(result["body"])
+                    value["permissions"] = []
+                    result = response(200, value)
             else:
                 event["requestContext"]["authorizer"] = {"jwt": {"claims": {"sub": "local-presenter"}}}
                 result = api.handler(event, None)
@@ -110,17 +120,31 @@ class Server(SimpleHTTPRequestHandler):
             pass
 
 
+def create_server(port, platform_db=None, recovery=False):
+    default = ROOT / ".local-platform" / "platform.sqlite3"
+    database = Path(platform_db or default).resolve()
+    primary = database == default.resolve() or (database.is_file() and default.is_file() and database.samefile(default))
+    if recovery and (not database.is_file() or primary):
+        raise ValueError("Recovery inspection needs a separate existing restored database.")
+    documents = DocumentStore(SQLiteBackend(database))
+    service = AccountingService(documents)
+    server = ThreadingHTTPServer(("127.0.0.1", port), Server)
+    server.recovery_mode = recovery
+    server.platform = PlatformAPI(service)
+    server.agents = AgentAPI(service)
+    cookie_name = "agentu_recovery_" + hashlib.sha256(str(database).encode()).hexdigest()[:12] if recovery else "agentu_local_session"
+    server.auth = LocalAuth(documents, cookie_name)
+    return server, service
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=4321)
+    parser.add_argument("--platform-db", type=Path, help="Separate institution database for a local recovery inspection")
+    parser.add_argument("--recovery", action="store_true", help="Inspect a restored copy; deny domain writes and do not start the worker")
     args = parser.parse_args()
     api.store = FileStore(ROOT / ".local-demo")
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), Server)
-    documents = DocumentStore(SQLiteBackend(ROOT / ".local-platform" / "platform.sqlite3"))
-    service = AccountingService(documents)
-    server.platform = PlatformAPI(service)
-    server.agents = AgentAPI(service)
-    server.auth = LocalAuth(documents)
+    server, service = create_server(args.port, args.platform_db, args.recovery)
     stop = threading.Event()
     runner = Runner(service)
     def work():
@@ -130,8 +154,9 @@ if __name__ == "__main__":
             except Exception:
                 print(json.dumps({"error": "local_worker_failed"}), flush=True)
             stop.wait(2)
-    threading.Thread(target=work, daemon=True).start()
-    print(f"Agentu local rehearsal: http://127.0.0.1:{args.port}/agentu/", flush=True)
+    if not args.recovery:
+        threading.Thread(target=work, daemon=True).start()
+    print(f"Agentu {'recovery inspection (changes and worker paused)' if args.recovery else 'local rehearsal'}: http://127.0.0.1:{args.port}/agentu/", flush=True)
     try:
         server.serve_forever()
     finally:

@@ -79,7 +79,7 @@ For a code rollback, release the previously tested Git commit through the same w
 
 For infrastructure changes, use a new reviewed CloudFormation change set. A failed deployment should be diagnosed from the named stack’s events. Do not delete and recreate the account or unrelated resources.
 
-Website buckets, user pools and records tables use retention on stack deletion/replacement. A later cleanup is a separate explicit action; deleting a stack does not erase the retained data. DynamoDB point-in-time recovery and S3 versions provide recovery primitives, but no restore drill has been completed until it is recorded in readiness.md.
+Website buckets, user pools and records tables use retention on stack deletion/replacement. A later cleanup is a separate explicit action; deleting a stack does not erase the retained data. DynamoDB point-in-time recovery and S3 versions provide recovery primitives, and the local platform restore drill is recorded in `readiness.md`. A hosted DynamoDB/Cognito recovery and cutover still needs verification; follow [Platform backup and recovery](recovery.md).
 
 ## Agent worker and model setup
 

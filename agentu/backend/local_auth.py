@@ -19,27 +19,30 @@ def password_hash(password, salt):
     return hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt), n=16384, r=8, p=1, dklen=32).hex()
 
 
-def cookie(value, age=LIFETIME):
+def cookie(value, age=LIFETIME, name=COOKIE):
     # HTTP is accepted only on loopback; the hosted app uses Cognito, not this cookie.
-    return f"{COOKIE}={value}; HttpOnly; SameSite=Strict; Path=/api/; Max-Age={age}"
+    return f"{name}={value}; HttpOnly; SameSite=Strict; Path=/api/; Max-Age={age}"
 
 
 class LocalAuth:
-    def __init__(self, store):
+    def __init__(self, store, cookie_name=COOKIE):
         self.store = store
+        if not cookie_name or not cookie_name.replace("_", "").isalnum():
+            raise ValueError("Use a safe local session cookie name.")
+        self.cookie_name = cookie_name
 
     @staticmethod
-    def token_hash(headers):
+    def token_hash(headers, name=COOKIE):
         parsed = SimpleCookie()
         try:
             parsed.load(headers.get("Cookie", headers.get("cookie", "")))
         except Exception:
             return None
-        token = parsed.get(COOKIE)
+        token = parsed.get(name)
         return hashlib.sha256(token.value.encode()).hexdigest() if token else None
 
     def actor(self, headers):
-        token = self.token_hash(headers)
+        token = self.token_hash(headers, self.cookie_name)
         if not token:
             return None
         def operation(tx):
@@ -82,14 +85,14 @@ class LocalAuth:
         result = self.store.transact(operation)
         if "error" in result:
             raise PlatformError(result["error"], result["status"], "sign_in_failed")
-        return result, cookie(token)
+        return result, cookie(token, name=self.cookie_name)
 
     def logout(self, headers):
-        token = self.token_hash(headers)
+        token = self.token_hash(headers, self.cookie_name)
         if token:
             def operation(tx):
                 session = tx.get("LOCAL_SESSION#" + token, "META")
                 if session:
                     tx.put("LOCAL_SESSION#" + token, "META", {**session, "expires_at": 0})
             self.store.transact(operation)
-        return cookie("", 0)
+        return cookie("", 0, self.cookie_name)

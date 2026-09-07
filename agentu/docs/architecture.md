@@ -64,6 +64,10 @@ Full journal reversals derive their opposite postings from a retained original j
 
 AccountingService extends the application with supplied-statement imports and reconciliation records. The durable worker scans complete journal sequences through an explicit cut-off, builds reference indexes in bounded pages and matches signed account movements one-to-one. Manual changes revise the comparison hash and invalidate stale review requests. Final independent review records either reconciled or accepted-with-exceptions status; it never changes balances. Statement source hashes are declared evidence, not bank authentication. See [Corrections and reconciliation](accounting.md).
 
+## Local recovery
+
+The independent database verifier reconstructs balances, reservations and usage, checks action/journal links, queue references and history pointers, and compares completed reconciliations with their underlying journals. A consistent SQLite backup is checked before its manifest is completed. Restore creates a separate verified copy and expires copied browser sessions. The recovery HTTP server uses a separate cookie, rejects domain writes and does not start the worker. Hosted recovery and external anchoring remain unverified; see [Platform backup and recovery](recovery.md).
+
 ## Before live financial use
 
 Not implemented or verified: real AI/model execution, bank/payment integrations, beneficiary onboarding, regulated custody/payment operations, independent evidence signing, authenticated provider statement reconciliation, deployed multi-tenant security verification, production environment/recovery, external penetration testing, incident-response ownership and service commitments. The full requirement record remains open in `platform-scope.md`.
