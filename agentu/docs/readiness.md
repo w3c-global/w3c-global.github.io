@@ -1,0 +1,92 @@
+# Agentu readiness — 7 September 2026
+
+The requested end state is the full platform. The work below is verified progress; it does not close the full completion record in `platform-scope.md`.
+
+## Implemented and verified locally
+
+- Reworked website retaining the established Agentu identity, with clear pre-incorporation wording and prominent demo access.
+- Working control room with three user-selected scenarios, editable amounts, action inspection, approval/decline, balances, audit export and chain verification.
+- Server-side policy engine with integer money values, fixed mandates, hard-limit precedence and rechecks at approval.
+- Idempotency, atomic state updates and user/workspace isolation.
+- Local rehearsal server and Windows launcher.
+- 138 automated tests covering the demo, institution service, version-checked storage, HTTP authentication, exports, signed evidence and operations monitoring.
+- Browser checks: allowed sweep, blocked destination and approval produce the expected balances and 10 linked audit events.
+- JavaScript syntax checks and CloudFormation schema/lint validation pass.
+- Allowlisted static build and Lambda package.
+- Infrastructure templates for separate AWS sandbox, demo, staging and production stacks in the designated account, with required authenticator-app MFA and deletion protection.
+- CI checks, OIDC release workflow, narrow release-role setup, and deployment/rollback instructions.
+- Work is saved on the business branch for W3C draft pull request #1. The CI workflow runs all 138 tests, JavaScript checks and CloudFormation validation; check its result against the current commit before deployment.
+- All four GitHub release environments created with branch restrictions; staging and production allow only `main`. AWS role attachment remains pending.
+- Founder walkthrough for Tuesday 8 September.
+- Operational application at `/agentu/app/`: onboarding, institutions, accounts, funding, operations, policies, team access, ledger and audit.
+- Durable SQLite development store and transactional DynamoDB adapter, with separate records and optimistic checks for the full read set.
+- Independent proposal/approval and policy publication, current-role checks, reservations, daily limits, institution pause, cancellation, decline and automatic reservation expiry.
+- Real local sign-in with hashed passwords, cookie sessions and login throttling; Cognito identity binding implemented for hosted use.
+- Browser verification with two separately signed-in development identities: £2.5m opening sandbox capital, a £75k pending transfer and independent approval. Result: £2.425m operating, £75k reserve, zero reservation, two balanced journals and nine linked audit events.
+- Mobile breakpoint inspected with no page-level horizontal overflow.
+- Consistent paginated journal/audit exports and a standalone verifier rejecting altered or truncated data.
+- AWS template extended with the platform table, authenticated API route and application callback/configuration; no local authentication adapter is included in Lambda.
+
+- Governed Agents and Agent runs pages: independent mandate publication, scoped expiring credentials, suspension, cancellation, retry-safe runs and provider evidence.
+- Local worker browser walkthrough: an independently published reserve mandate proposed GBP 75,000; the requesting identity could not approve; a different identity approved, producing GBP 2.35m Operating, GBP 150k Reserve and no outstanding reservation.
+- Repeated treasury run verified as no-action; external credential issuance, masked one-time display, removal after dialog close and revocation checked in the browser.
+- Independent server-side snapshot exports verify 25 linked audit events and three balanced journals. This is separate from the browser-download check, which remains unverified.
+- Worker deployment, restricted work-item deletion, optional one-model Bedrock permission, heartbeat/failure/expiry alarms and coordinated API/worker release tooling pass template validation.
+
+- Ledger reversals append an independently approved inverse journal, preserve the original, prevent duplicate reversal claims and reuse current policy/liquidity/expiry controls.
+- Supplied-statement reconciliation supports bounded CSV imports, fixed journal cut-offs, worker comparisons, exact reference/amount matching, manual matching/unmatching, independent review and explicit exception acceptance.
+- Browser verification matched two GBP 75k outflows with zero difference, reopened/rematched one row, obtained independent review and verified that a later reversal leaves that snapshot unchanged. A second statement with an unmatched GBP 100 charge rejected clean review and required explicit exception acceptance.
+- Comparison exports have a standalone arithmetic, completeness, link and hash verifier; CSV parser tests cover quoted fields, dates, duplicate IDs and exact signed amounts.
+- The latest accounting snapshot verifies 44 linked audit events, five balanced journals and both clean/exception comparison exports. After correction and a further independently approved agent transfer, balances are GBP 2.35m Operating and GBP 150k Reserve, with zero reserved.
+- The final comparison and expanded evidence were inspected at 390 pixels: no page-level horizontal overflow; wide row tables scroll inside their panels.
+
+## History and upgrade verification
+
+- Operations, agent runs and reconciliations now paginate in creation order across the full history. Agent-run links open the exact current operation.
+- Tests verify more than 40 records, timestamp ties, inserts between pages, resumable upgrades and rollback rebuilds. A mocked DynamoDB page fits the full read-set check.
+- The local upgrade preserved 129 existing source records, added nine pointers and one audit event, and resumed after a deliberately bounded first run. The latest institution has 45 linked audit events and five balanced journals. Direct links and return to the complete list were verified in the browser.
+- Existing institutions must follow `history-upgrade.md`; deployed migration verification remains outstanding.
+
+## Environment configuration verification
+
+- All deployment and release commands support sandbox, demo, staging and production. GitHub staging/production environments and exact `main` branch restrictions were created and read back on 7 September. Their AWS roles remain unattached.
+- The generated stack requires software-token MFA, verified email changes, 15-minute identity/access tokens, protected data tables and user pool, and longer staging/production log retention.
+- A read-only inspector checks actual resource bindings, identity settings, the complete JWT route inventory, data protection and private website origins before release. Conditional Lambda revisions and matching API/worker hashes protect publication.
+- Tests reject cross-environment references, identity/data/API drift, mixed packages and failed updates. AWS response fields are checked against the installed SDK schemas. No actual hosted configuration inspection or MFA enrollment is claimed. See `environments.md`.
+
+## Signed evidence verification
+
+- Operator tooling cross-checks matching audit/journal snapshots, pins an independently supplied public key, requests KMS signing and verifies the signature offline. Exact export bytes and environment/institution/head identifiers are covered by the signed manifest.
+- Each environment template adds a retained RSA-3072 signing key, private versioned archive with 30-day governance retention and an unattached operator policy. Application and release roles receive no signing or archive permission.
+- Tests perform real RSA-PSS signing and verification with ephemeral fictional keys, and reject altered signatures/files, mixed institutions or snapshots, coordinated journal changes and wrong trust records. Archive tests verify exact versions, checksums, uncertain-upload retries, retention and downloaded packets. AWS transports are mocked.
+- The actual local 45-event audit and five-journal exports pass the new paired consistency check. They have not been signed with AWS. Hosted signing/archive/download, operator assignment and automatic checkpoint delivery remain outstanding. See `evidence.md`.
+
+## Operations monitoring verification
+
+- Each environment now defines eleven alarms, a dashboard and an operations topic: API invocation and HTTP errors, API latency, worker failures/expiry/heartbeat, and read/write throttling on both tables. No subscriptions or recipients are configured.
+- A separate read-only inspector verifies alarm definitions/routing, topic policy, confirmation counts, dashboard bindings and the worker's actual schedule/target. It reads recent metrics, preserves missing values as unknown and requires recent heartbeat/API samples. An observed OK result never claims alert delivery, cost controls or hosted journeys.
+- Tests cover all four stages, drift, incorrect accounts/routes, pending recipients, stale/partial/invalid metrics, missing heartbeat, API errors, disabled/redirected workers and pagination. Captured request and mocked response shapes match the installed AWS SDK; no AWS monitoring calls were made.
+- The expanded readable template exceeds CloudFormation's inline limit. Deployment now validates and submits an equivalent compact body, with a size check before artifact changes. The full template passes lint and the compact-body regression tests. See `monitoring.md` for response steps and the remaining hosted drills.
+
+## Local recovery verification
+
+- Consistent platform backups, independent whole-database integrity checks and quarantined restore copies are implemented. Recovery HTTP rejects domain changes, copied sessions expire, and the worker remains stopped.
+- The live rehearsal database was restored separately and browser-inspected with matching balances, 45 audit events, five journals, four operations, three runs and two comparisons. Its original session and operating controls remained available.
+- Tests cover live WAL backups, nonzero reservations, lost work/history, altered accounting evidence and mutation attempts against recovery mode. See `recovery.md`; hosted recovery and cutover remain unverified.
+
+## Not yet verified / blocked by account access
+
+- AWS sign-in and an authenticated deployment session for account `032312375271`.
+- Actual creation of all four environment stacks and public AWS URLs.
+- Cognito user onboarding and hosted authentication journey.
+- DynamoDB concurrency and isolation tests against the deployed service.
+- Private S3 / CloudFront checks and an actual GitHub OIDC release.
+- Budget notifications, monitoring recipient and hosted restore rehearsal.
+- Designated evidence operator, trusted key confirmation and a real sign/archive/download drill.
+- Updated public website cutover to the verified demo environment.
+
+The latest AWS inspection showed the IAM sign-in page with account `032312375271` populated and username/password empty. No command-line AWS profiles were available. The infrastructure is prepared and has not been deployed.
+
+## Intentional boundaries
+
+The company is not yet incorporated. The treasury rule is deterministic automation; no real AI model invocation, financial integration or live-money execution has been verified. The Bedrock adapter is implemented and mock-tested. The audit chain is hash-linked; operator signing tooling is built and tested, but no AWS signature or automatic anchoring is claimed. Signatures cover supplied snapshots and do not authenticate banks, establish recency or prevent later database rewrites. Real model verification, beneficiary/provider execution, authenticated provider reconciliation, hosted evidence assurance, deployed staging/production verification and tested hosted recovery remain unfinished. Local verification of the platform controls does not establish production readiness.

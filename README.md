@@ -1,6 +1,6 @@
 # W3C / World3 Corporation
 
-GitHub Pages repository for World3 Corporation and its group company, Agentu.
+GitHub Pages repository for World3 Corporation and the pre-incorporation Agentu venture.
 
 ## Sites
 

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Agentu · Operations</title>
+    <link
+      rel="icon"
+      href="../brand/logos/agentu-favicon.svg"
+      type="image/svg+xml"
+    />
+    <link rel="stylesheet" href="./app.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to workspace</a>
+    <div id="shell">
+      <aside class="sidebar">
+        <a class="wordmark" href="../">agentu</a>
+        <div class="product-label">OPERATIONS PLATFORM</div>
+        <nav aria-label="Workspace">
+          <button data-page="overview" class="active">
+            <span>01</span> Overview
+          </button>
+          <button data-page="accounts"><span>02</span> Accounts</button>
+          <button data-page="actions"><span>03</span> Operations</button>
+          <button data-page="agents"><span>04</span> Agents</button>
+          <button data-page="runs"><span>05</span> Agent runs</button>
+          <button data-page="policies"><span>06</span> Policies</button>
+          <button data-page="members"><span>07</span> Team & access</button>
+          <button data-page="journal"><span>08</span> Ledger</button>
+          <button data-page="reconciliations">
+            <span>09</span> Reconciliation
+          </button>
+          <button data-page="audit"><span>10</span> Audit trail</button>
+        </nav>
+        <div class="sidebar-foot">
+          <span class="status-dot"></span
+          ><span id="environment">Connecting…</span>
+          <p>Controlled actions.<br />Accountable outcomes.</p>
+          <a href="../demo/">Open guided demo ↗</a>
+        </div>
+      </aside>
+      <div class="workspace">
+        <header class="topbar">
+          <label class="institution-label"
+            >Institution<select id="institution" aria-label="Institution">
+              <option>No institution selected</option>
+            </select></label
+          >
+          <div class="identity">
+            <span id="identity">Signed out</span
+            ><button id="refresh" class="quiet">Refresh</button
+            ><button id="logout" class="quiet" hidden>Sign out</button>
+          </div>
+        </header>
+        <div class="mode-banner" id="mode-banner">
+          Sandbox · Accounting entries use simulated funds.
+        </div>
+        <main id="main" tabindex="-1">
+          <div id="notice" role="status" aria-live="polite"></div>
+          <div id="content"><p>Opening your workspace…</p></div>
+        </main>
+        <footer>
+          Agentu is in development. Company formation is pending.
+          <a href="../privacy.html">Privacy</a>
+        </footer>
+      </div>
+    </div>
+    <dialog id="dialog">
+      <form id="command-form">
+        <div class="dialog-title">
+          <h2 id="dialog-title"></h2>
+          <button
+            type="button"
+            id="close-dialog"
+            class="quiet"
+            aria-label="Close dialog"
+          >
+            ✕
+          </button>
+        </div>
+        <p id="dialog-intro" class="muted"></p>
+        <div id="dialog-fields"></div>
+        <p id="dialog-error" role="alert"></p>
+        <button id="dialog-submit" class="primary" type="submit">Save</button>
+      </form>
+    </dialog>
+  </body>
+</html>

@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <base href="/agentu/demo/" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Agentu — Control room</title>
+    <link rel="icon" href="../brand/logos/agentu-favicon.svg" />
+    <link rel="stylesheet" href="../site.css" />
+    <link rel="stylesheet" href="demo.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#workspace">Skip to workspace</a>
+    <header class="demo-header">
+      <a class="wordmark" href="../">Agentu<span>.</span></a>
+      <div class="header-divider"></div>
+      <span>Control room</span>
+      <div class="demo-header-right">
+        <span id="environment" class="badge neutral">Connecting</span
+        ><a href="../">Website ↗</a
+        ><button id="sign-out" class="plain-button" hidden>Sign out</button>
+      </div>
+    </header>
+    <div class="demo-banner">
+      <span class="signal"></span><strong>Founder demonstration</strong
+      ><span
+        >Simulated agents and funds. Real policy decisions and audit
+        records.</span
+      >
+    </div>
+    <main id="workspace" class="workspace">
+      <div class="workspace-heading">
+        <div>
+          <p class="eyebrow">Treasury operations / Sample institution</p>
+          <h1>Every action. Under control.</h1>
+        </div>
+        <div class="toolbar">
+          <button class="button secondary small" id="new-session" disabled>
+            New rehearsal</button
+          ><button class="button small" id="export" disabled>
+            Export audit ↓
+          </button>
+        </div>
+      </div>
+      <div id="notice" role="status" aria-live="polite" class="notice">
+        Connecting to the demonstration service…
+      </div>
+      <section id="auth-panel" class="auth-panel" hidden>
+        <h2>Enter the demonstration.</h2>
+        <p>
+          The hosted control room is available to invited users. Sign in to open
+          your own rehearsal.
+        </p>
+        <button id="sign-in" class="button">Sign in to Agentu ↗</button>
+        <p id="auth-detail" class="muted"></p>
+      </section>
+      <div id="connected" hidden>
+        <section class="balances" aria-label="Simulated account balances">
+          <article>
+            <span class="eyebrow">Operating account</span
+            ><strong id="operating-balance">—</strong
+            ><span>GBP · simulated funds</span>
+          </article>
+          <article>
+            <span class="eyebrow">Treasury reserve</span
+            ><strong id="reserve-balance">—</strong
+            ><span>Approved internal destination</span>
+          </article>
+          <article class="control-summary">
+            <span class="eyebrow">Mandate in force</span
+            ><strong>£100,000 <small>auto limit</small></strong
+            ><span>£1m liquidity floor · £500k maximum</span>
+          </article>
+        </section>
+        <div class="work-grid">
+          <section class="panel scenario-panel">
+            <div class="panel-heading">
+              <h2>Propose an action</h2>
+              <span class="badge neutral">Demo agent</span>
+            </div>
+            <p class="muted panel-intro">
+              Choose a request. The server evaluates it against the same mandate
+              each time.
+            </p>
+            <div
+              class="scenario-picker"
+              role="group"
+              aria-label="Demo scenarios"
+            >
+              <button data-scenario="sweep" aria-pressed="true">
+                <span class="scenario-icon allow">↗</span
+                ><span
+                  ><strong>Treasury sweep</strong
+                  ><small>£75,000 · within mandate</small></span
+                ><span class="pick-arrow">→</span></button
+              ><button data-scenario="blocked" aria-pressed="false">
+                <span class="scenario-icon block">×</span
+                ><span
+                  ><strong>Unknown beneficiary</strong
+                  ><small>£25,000 · unapproved destination</small></span
+                ><span class="pick-arrow">→</span></button
+              ><button data-scenario="approval" aria-pressed="false">
+                <span class="scenario-icon review">Ⅱ</span
+                ><span
+                  ><strong>Large transfer</strong
+                  ><small>£175,000 · operator approval</small></span
+                ><span class="pick-arrow">→</span>
+              </button>
+            </div>
+            <form id="propose-form">
+              <label for="amount"
+                >Amount in GBP<input
+                  id="amount"
+                  name="amount"
+                  type="text"
+                  inputmode="decimal"
+                  value="75000.00"
+                  required
+                  pattern="[0-9]+(\.[0-9]{1,2})?"
+                  autocomplete="off"
+              /></label>
+              <div class="request-route">
+                <span>Operating account</span><span aria-hidden="true">↓</span
+                ><strong id="destination">Treasury reserve</strong>
+              </div>
+              <button class="button" type="submit" id="run">
+                Run policy checks →
+              </button>
+              <p class="form-note">
+                Amounts are editable. The destination belongs to the selected
+                scenario.
+              </p>
+            </form>
+          </section>
+          <section class="panel decision-panel" aria-label="Decision details">
+            <div class="panel-heading">
+              <h2>Decision &amp; evidence</h2>
+              <span id="decision-status" class="badge neutral">Ready</span>
+            </div>
+            <div id="decision-content" aria-live="polite">
+              <div class="decision-empty">
+                <span class="empty-mark">A<span>.</span></span>
+                <h3>Start with a request.</h3>
+                <p>
+                  See which rules pass, what requires attention and whether the
+                  action can proceed.
+                </p>
+                <div class="empty-flow">
+                  <span>Propose</span><span>→</span><span>Check</span
+                  ><span>→</span><span>Record</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+        <section class="panel activity-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Action history</h2>
+              <p class="muted">
+                Every request in this rehearsal, including blocked and declined
+                actions.
+              </p>
+            </div>
+            <span id="action-count" class="mono">0 actions</span>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Time (UTC)</th>
+                  <th scope="col">Action</th>
+                  <th scope="col">Amount</th>
+                  <th scope="col">Outcome</th>
+                  <th scope="col"><span class="sr-only">Inspect</span></th>
+                </tr>
+              </thead>
+              <tbody id="activity"></tbody>
+            </table>
+          </div>
+        </section>
+        <section class="panel audit-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Audit trail</h2>
+              <p class="muted">
+                Hash-linked records of requests, policy decisions and simulated
+                execution.
+              </p>
+            </div>
+            <button class="button secondary small" id="verify">
+              Verify record chain
+            </button>
+          </div>
+          <p id="integrity" class="integrity" aria-live="polite"></p>
+          <div id="audit-events" class="audit-events"></div>
+          <details class="integrity-explainer">
+            <summary>What does verification prove?</summary>
+            <p>
+              Each record contains the previous record’s SHA-256 hash.
+              Verification checks the sequence, links and contents for
+              consistency. This demo does not use an external signature or an
+              immutable store: an administrator with database access could
+              rewrite the entire chain. The export can be checked independently
+              using the verifier supplied with the project.
+            </p>
+          </details>
+        </section>
+      </div>
+      <footer class="demo-footer">
+        <span>Agentu · pre-incorporation venture</span
+        ><span>Demo policy v1 · no banking connection · no live AI model</span
+        ><a href="../privacy.html">Privacy &amp; demo data</a>
+      </footer>
+    </main>
+  </body>
+</html>

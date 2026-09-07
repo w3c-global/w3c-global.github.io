@@ -1,6 +1,6 @@
 AGENTU — BRAND PACK
 ===================
-Version 1.0 · 2026 · Agentu Inc
+Version 1.0 · 2026 · Agentu project
 "Financial infrastructure for AI"
 
 
