@@ -5,7 +5,7 @@ The active objective is to build Agentu as an operational product. The guided de
 | Requirement | Evidence needed for completion | Current status |
 | --- | --- | --- |
 | Institution onboarding and isolation | Persisted institutions, membership lifecycle and adversarial cross-tenant API tests | Built and tested locally; deployed verification pending |
-| Authentication and independent permissions | Verified sign-in, invitations, suspension and server-enforced roles; distinct users proposing/approving | Local identity flow browser-tested; Cognito binding built; hosted onboarding and MFA pending |
+| Authentication and independent permissions | Verified sign-in, invitations, suspension and server-enforced roles; distinct users proposing/approving | Local identity flow browser-tested; Cognito binding and required TOTP configuration built; hosted onboarding, enrollment and recovery verification pending |
 | Configurable, governed policy | Versioned limits and mandates, independent publication, full decision evidence and concurrent-change tests | Built and tested locally; hosted checks pending |
 | Accounts and ledger | Multiple currencies, balanced append-only journal entries, reservations, reversals and reconciliation | Accounts, journal, reservations, governed full reversals and supplied-statement reconciliation built and tested; authenticated provider and hosted verification pending |
 | Payment/treasury operations | Durable action lifecycle, independent approvals, cancellation, replay safety and provider outcomes | Internal sandbox transfers built; external execution pending |
@@ -13,7 +13,7 @@ The active objective is to build Agentu as an operational product. The guided de
 | Financial integrations | Named provider, verified credentials, test connection, idempotent execution, authenticated callbacks and reconciliation | Provider input outstanding |
 | Evidence and monitoring | Exports, independent verification, signing/retention, alerts, incident controls and tested recovery | Exports, database integrity checks, worker alarms and a local restore drill verified; signing, deployed alerts and hosted restore pending |
 | Operational web application | Institution/team/account/policy/action/approval/ledger/settings journeys against the real services | Core, treasury-agent, reversal and reconciliation journeys browser-tested locally; hosted model/provider verification pending |
-| AWS environments | Verified sandbox, staging and production configuration in the designated business account, access controls and smoke tests | Account access outstanding |
+| AWS environments | Verified sandbox, staging and production configuration in the designated business account, access controls and smoke tests | Four isolated targets and configuration inspector built/tested; GitHub environments created; AWS access and provisioning outstanding |
 | Releases and operations | W3C source, CI, controlled releases, migration/rollback, backups and a completed restore test | CI, release foundation, resumable migration and local backup/restore built and tested; deployed upgrade/restore pending |
 | Public site and handover | Accurate product claims, working contact path, hosted product entry, documentation and founder walkthrough | Site revision and walkthrough built; public cutover outstanding |
 

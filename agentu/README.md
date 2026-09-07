@@ -72,3 +72,5 @@ Agent operation, credential integration, worker behavior and model configuration
 Existing institutions: follow [the ordered-history upgrade](docs/history-upgrade.md) before using this version. New institutions initialize it automatically.
 
 Backups and restoration: [Platform backup and recovery](docs/recovery.md), including a verified local restore drill and the outstanding hosted recovery requirements.
+
+See [Business deployment environments](docs/environments.md) for sandbox, demo, staging and production configuration, required hosted MFA, and checks performed before release.

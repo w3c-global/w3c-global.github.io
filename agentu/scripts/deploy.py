@@ -5,7 +5,6 @@ python agentu/scripts/deploy.py apply --stage demo --profile agentu --change-set
 python agentu/scripts/deploy.py status --stage demo --profile agentu
 """
 import argparse
-import base64
 import json
 import mimetypes
 import sys
@@ -14,20 +13,19 @@ from pathlib import Path
 import boto3
 from botocore.exceptions import ClientError
 from build import build, ROOT, OUT
-
-EXPECTED_ACCOUNT = "032312375271"
-REGION = "eu-west-2"
+from environments import EXPECTED_ACCOUNT, REGION, STAGES, environment
+from environment_check import stack_identity, verify_environment
 
 
 def clients(profile, region):
+    if region != REGION:
+        raise SystemExit(f"This deployment is configured for {REGION} only.")
     session = boto3.Session(profile_name=profile, region_name=region)
     identity = session.client("sts").get_caller_identity()
     if identity["Account"] != EXPECTED_ACCOUNT:
         raise SystemExit(f"Refusing deployment: account {identity['Account']} is not the designated Agentu account {EXPECTED_ACCOUNT}.")
     if identity["Arn"].endswith(":root"):
         raise SystemExit("Use an IAM or federated deployment identity, not AWS root credentials.")
-    if region != REGION:
-        raise SystemExit(f"This deployment is configured for {REGION} only.")
     print(f"Verified designated Agentu account {EXPECTED_ACCOUNT} in {region}.", flush=True)
     return session
 
@@ -58,6 +56,7 @@ def model_parameter(model_arn, existing_parameters, updating):
 
 
 def plan(session, stage, model_arn=None):
+    environment(stage)
     manifest = build()
     bucket = artifact_bucket(session)
     key = f"{stage}/lambda/{manifest['lambda_sha256']}.zip"
@@ -69,6 +68,7 @@ def plan(session, stage, model_arn=None):
     existing_parameters = []
     try:
         existing = cf.describe_stacks(StackName=stack)["Stacks"][0]
+        stack_identity(stage, existing)
         status = existing["StackStatus"]
         existing_parameters = existing.get("Parameters", [])
         kind = "CREATE" if status == "REVIEW_IN_PROGRESS" else "UPDATE"
@@ -88,23 +88,18 @@ def plan(session, stage, model_arn=None):
 
 
 def outputs(session, stage):
+    environment(stage)
     stack = session.client("cloudformation").describe_stacks(StackName="agentu-" + stage)["Stacks"][0]
+    stack_identity(stage, stack)
     return stack, {x["OutputKey"]: x["OutputValue"] for x in stack.get("Outputs", [])}
 
 
 def publish(session, stage):
-    stack, values = outputs(session, stage)
-    if stack["StackStatus"] not in ("CREATE_COMPLETE", "UPDATE_COMPLETE"):
-        raise SystemExit("The AWS stack must finish successfully before uploading the website.")
+    environment(stage)
     manifest = build()
-    if "WorkerFunctionName" not in values:
-        raise SystemExit("Apply the infrastructure change set containing the worker before publishing.")
-    for key in ("WorkerFunctionName", "FunctionName"):
-        configuration = session.client("lambda").get_function_configuration(FunctionName=values[key])
-        deployed_hash = base64.b64decode(configuration["CodeSha256"]).hex()
-        if deployed_hash != manifest["lambda_sha256"] or configuration.get("LastUpdateStatus") != "Successful":
-            raise SystemExit("Backend code differs from this build or is still updating. Release the matching API and worker before publishing.")
-    config = {"mode": "hosted", "environment": "Founder demo" if stage == "demo" else "Sandbox",
+    verification = verify_environment(session, stage, manifest["lambda_sha256"])
+    values = verification["outputs"]
+    config = {"mode": "hosted", "environment": environment(stage)["Label"],
               "apiBase": "", "clientId": values["UserPoolClientId"], "authDomain": values["AuthDomain"],
               "redirectUri": values["DemoUrl"], "logoutUri": values["WebsiteUrl"]}
     (OUT / "static" / "agentu" / "demo" / "config.json").write_text(json.dumps(config), encoding="utf-8")
@@ -119,13 +114,14 @@ def publish(session, stage):
     invalidation = session.client("cloudfront").create_invalidation(DistributionId=values["DistributionId"], InvalidationBatch={"Paths": {"Quantity": 1, "Items": ["/agentu/*"]}, "CallerReference": str(time.time_ns())})
     # Only public configuration and resource identifiers are recorded locally.
     (OUT / f"{stage}-outputs.json").write_text(json.dumps(values, indent=2), encoding="utf-8")
+    (OUT / f"{stage}-environment.json").write_text(json.dumps(verification, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"published": values["WebsiteUrl"], "demo": values["DemoUrl"], "invalidation": invalidation["Invalidation"]["Id"]}), flush=True)
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=["identity", "plan", "apply", "status", "publish"])
-    parser.add_argument("--stage", choices=["sandbox", "demo"], required=True)
+    parser.add_argument("command", choices=["identity", "plan", "apply", "status", "inspect", "publish"])
+    parser.add_argument("--stage", choices=STAGES, required=True)
     parser.add_argument("--profile")
     parser.add_argument("--region", default=REGION)
     parser.add_argument("--change-set")
@@ -137,6 +133,11 @@ def main():
         return
     if args.command == "plan":
         plan(session, args.stage, args.bedrock_model_arn)
+    elif args.command == "inspect":
+        result = verify_environment(session, args.stage)
+        OUT.mkdir(exist_ok=True)
+        (OUT / f"{args.stage}-environment.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps(result, indent=2))
     elif args.command == "apply":
         if not args.change_set:
             raise SystemExit("Specify the reviewed --change-set name.")

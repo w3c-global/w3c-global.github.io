@@ -2,27 +2,20 @@
 import argparse
 import time
 from build import build, OUT
-from deploy import clients, outputs, publish
+from deploy import clients, publish
+from environments import STAGES
+from environment_check import verify_environment
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--stage", required=True, choices=["sandbox", "demo"])
-    parser.add_argument("--profile")
-    args = parser.parse_args()
-    session = clients(args.profile, "eu-west-2")
-    stack, values = outputs(session, args.stage)
-    if stack["StackStatus"] not in ("CREATE_COMPLETE", "UPDATE_COMPLETE"):
-        raise SystemExit("Infrastructure is not ready for a release.")
-    if "WorkerFunctionName" not in values:
-        raise SystemExit("Apply the infrastructure change set containing the worker before releasing.")
+def release(session, stage):
+    verification = verify_environment(session, stage)
     build()
     functions = session.client("lambda")
-    for key in ("WorkerFunctionName", "FunctionName"):
-        existing = functions.get_function_configuration(FunctionName=values[key])
-        functions.update_function_code(FunctionName=values[key], ZipFile=(OUT / "lambda.zip").read_bytes(), RevisionId=existing["RevisionId"])
+    for kind in ("worker", "api"):
+        verified = verification["functions"][kind]
+        functions.update_function_code(FunctionName=verified["name"], ZipFile=(OUT / "lambda.zip").read_bytes(), RevisionId=verified["revision"])
         for _ in range(12):
-            current = functions.get_function_configuration(FunctionName=values[key])
+            current = functions.get_function_configuration(FunctionName=verified["name"])
             if current.get("LastUpdateStatus") == "Successful":
                 break
             if current.get("LastUpdateStatus") == "Failed":
@@ -30,4 +23,12 @@ if __name__ == "__main__":
             time.sleep(5)
         else:
             raise SystemExit("Lambda is still updating. Check its status before publishing.")
-    publish(session, args.stage)
+    publish(session, stage)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--stage", required=True, choices=STAGES)
+    parser.add_argument("--profile")
+    args = parser.parse_args()
+    release(clients(args.profile, "eu-west-2"), args.stage)

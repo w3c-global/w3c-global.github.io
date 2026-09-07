@@ -9,14 +9,14 @@ The requested end state is the full platform. The work below is verified progres
 - Server-side policy engine with integer money values, fixed mandates, hard-limit precedence and rechecks at approval.
 - Idempotency, atomic state updates and user/workspace isolation.
 - Local rehearsal server and Windows launcher.
-- 100 automated tests covering the demo, institution service, version-checked storage, HTTP authentication and export verification.
+- 113 automated tests covering the demo, institution service, version-checked storage, HTTP authentication and export verification.
 - Browser checks: allowed sweep, blocked destination and approval produce the expected balances and 10 linked audit events.
 - JavaScript syntax checks and CloudFormation schema/lint validation pass.
 - Allowlisted static build and Lambda package.
-- Infrastructure templates for separate AWS sandbox and demo stacks in the designated account.
+- Infrastructure templates for separate AWS sandbox, demo, staging and production stacks in the designated account, with required authenticator-app MFA and deletion protection.
 - CI checks, OIDC release workflow, narrow release-role setup, and deployment/rollback instructions.
-- Work is saved on the business branch for W3C draft pull request #1. The CI workflow runs all 101 tests, JavaScript checks and CloudFormation validation; check its result against the current commit before deployment.
-- GitHub release environments `agentu-sandbox` and `agentu-demo` created with branch restrictions. AWS role attachment remains pending.
+- Work is saved on the business branch for W3C draft pull request #1. The CI workflow runs all 113 tests, JavaScript checks and CloudFormation validation; check its result against the current commit before deployment.
+- All four GitHub release environments created with branch restrictions; staging and production allow only `main`. AWS role attachment remains pending.
 - Founder walkthrough for Tuesday 8 September.
 - Operational application at `/agentu/app/`: onboarding, institutions, accounts, funding, operations, policies, team access, ledger and audit.
 - Durable SQLite development store and transactional DynamoDB adapter, with separate records and optimistic checks for the full read set.
@@ -47,6 +47,13 @@ The requested end state is the full platform. The work below is verified progres
 - The local upgrade preserved 129 existing source records, added nine pointers and one audit event, and resumed after a deliberately bounded first run. The latest institution has 45 linked audit events and five balanced journals. Direct links and return to the complete list were verified in the browser.
 - Existing institutions must follow `history-upgrade.md`; deployed migration verification remains outstanding.
 
+## Environment configuration verification
+
+- All deployment and release commands support sandbox, demo, staging and production. GitHub staging/production environments and exact `main` branch restrictions were created and read back on 7 September. Their AWS roles remain unattached.
+- The generated stack requires software-token MFA, verified email changes, 15-minute identity/access tokens, protected data tables and user pool, and longer staging/production log retention.
+- A read-only inspector checks actual resource bindings, identity settings, the complete JWT route inventory, data protection and private website origins before release. Conditional Lambda revisions and matching API/worker hashes protect publication.
+- Tests reject cross-environment references, identity/data/API drift, mixed packages and failed updates. AWS response fields are checked against the installed SDK schemas. No actual hosted configuration inspection or MFA enrollment is claimed. See `environments.md`.
+
 ## Local recovery verification
 
 - Consistent platform backups, independent whole-database integrity checks and quarantined restore copies are implemented. Recovery HTTP rejects domain changes, copied sessions expire, and the worker remains stopped.
@@ -56,7 +63,7 @@ The requested end state is the full platform. The work below is verified progres
 ## Not yet verified / blocked by account access
 
 - AWS sign-in and an authenticated deployment session for account `032312375271`.
-- Actual creation of sandbox/demo stacks and public AWS URLs.
+- Actual creation of all four environment stacks and public AWS URLs.
 - Cognito user onboarding and hosted authentication journey.
 - DynamoDB concurrency and isolation tests against the deployed service.
 - Private S3 / CloudFront checks and an actual GitHub OIDC release.
@@ -67,4 +74,4 @@ The latest AWS inspection showed the IAM sign-in page with account `032312375271
 
 ## Intentional boundaries
 
-The company is not yet incorporated. The treasury rule is deterministic automation; no real AI model invocation, financial integration or live-money execution has been verified. The Bedrock adapter is implemented and mock-tested. The audit chain is hash-linked but not externally signed or immutable against administrators. Real model verification, beneficiary/provider execution, authenticated provider reconciliation, evidence anchoring, staging/production infrastructure and tested hosted recovery remain unfinished. Local verification of the platform controls does not establish production readiness.
+The company is not yet incorporated. The treasury rule is deterministic automation; no real AI model invocation, financial integration or live-money execution has been verified. The Bedrock adapter is implemented and mock-tested. The audit chain is hash-linked but not externally signed or immutable against administrators. Real model verification, beneficiary/provider execution, authenticated provider reconciliation, evidence anchoring, deployed staging/production verification and tested hosted recovery remain unfinished. Local verification of the platform controls does not establish production readiness.

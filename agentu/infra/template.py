@@ -1,7 +1,8 @@
-"""Generate the same isolated AWS stack for sandbox and founder demo."""
+"""Generate isolated business stacks for development, rehearsal and operation."""
 import json
 import sys
 from pathlib import Path
+from environments import CONTRACT, ENVIRONMENTS, STAGES
 
 R = lambda name: {"Ref": name}
 A = lambda name, attr="Arn": {"Fn::GetAtt": [name, attr]}
@@ -18,7 +19,7 @@ def template():
                    "Condition": {"ForAllValues:StringEquals": {"dynamodb:LeadingKeys": ["WORK#platform"]}}}
 
     add("Records", "AWS::DynamoDB::Table", {
-        "TableName": S("agentu-${Stage}-records"), "BillingMode": "PAY_PER_REQUEST",
+        "TableName": S("agentu-${Stage}-records"), "BillingMode": "PAY_PER_REQUEST", "DeletionProtectionEnabled": True,
         "AttributeDefinitions": [{"AttributeName": "pk", "AttributeType": "S"}],
         "KeySchema": [{"AttributeName": "pk", "KeyType": "HASH"}],
         "SSESpecification": {"SSEEnabled": True},
@@ -36,15 +37,16 @@ def template():
         "Tags": [{"Key": "Project", "Value": "Agentu"}, {"Key": "Environment", "Value": R("Stage")}]},
         DeletionPolicy="Retain", UpdateReplacePolicy="Retain")
     add("PlatformRecords", "AWS::DynamoDB::Table", {
-        "TableName": S("agentu-${Stage}-platform"), "BillingMode": "PAY_PER_REQUEST",
+        "TableName": S("agentu-${Stage}-platform"), "BillingMode": "PAY_PER_REQUEST", "DeletionProtectionEnabled": True,
         "AttributeDefinitions": [{"AttributeName": "pk", "AttributeType": "S"}, {"AttributeName": "sk", "AttributeType": "S"}],
         "KeySchema": [{"AttributeName": "pk", "KeyType": "HASH"}, {"AttributeName": "sk", "KeyType": "RANGE"}],
         "SSESpecification": {"SSEEnabled": True},
         "PointInTimeRecoverySpecification": {"PointInTimeRecoveryEnabled": True},
         "Tags": [{"Key": "Project", "Value": "Agentu"}, {"Key": "Environment", "Value": R("Stage")}]},
         DeletionPolicy="Retain", UpdateReplacePolicy="Retain")
-    add("ApiLogs", "AWS::Logs::LogGroup", {"LogGroupName": S("/agentu/${Stage}/api"), "RetentionInDays": 14})
-    add("FunctionLogs", "AWS::Logs::LogGroup", {"LogGroupName": S("/aws/lambda/agentu-${Stage}-api"), "RetentionInDays": 14})
+    retention = {"Fn::FindInMap": ["Environments", R("Stage"), "LogRetentionDays"]}
+    add("ApiLogs", "AWS::Logs::LogGroup", {"LogGroupName": S("/agentu/${Stage}/api"), "RetentionInDays": retention})
+    add("FunctionLogs", "AWS::Logs::LogGroup", {"LogGroupName": S("/aws/lambda/agentu-${Stage}-api"), "RetentionInDays": retention})
     add("ApiRole", "AWS::IAM::Role", {
         "RoleName": S("agentu-${Stage}-lambda"),
         "AssumeRolePolicyDocument": {"Version": "2012-10-17", "Statement": [{"Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]},
@@ -58,7 +60,7 @@ def template():
         "Code": {"S3Bucket": R("ArtifactBucket"), "S3Key": R("ArtifactKey")},
         "Environment": {"Variables": {"TABLE_NAME": R("Records"), "PLATFORM_TABLE_NAME": R("PlatformRecords"), "STAGE": R("Stage"), "BEDROCK_MODEL_ARN": R("BedrockModelArn")}},
         "Tags": [{"Key": "Project", "Value": "Agentu"}, {"Key": "Environment", "Value": R("Stage")}]}, DependsOn="FunctionLogs")
-    add("WorkerLogs", "AWS::Logs::LogGroup", {"LogGroupName": S("/aws/lambda/agentu-${Stage}-worker"), "RetentionInDays": 30})
+    add("WorkerLogs", "AWS::Logs::LogGroup", {"LogGroupName": S("/aws/lambda/agentu-${Stage}-worker"), "RetentionInDays": retention})
     add("WorkerRole", "AWS::IAM::Role", {
         "RoleName": S("agentu-${Stage}-worker"),
         "AssumeRolePolicyDocument": {"Version": "2012-10-17", "Statement": [{"Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]},
@@ -89,8 +91,10 @@ def template():
             "TreatMissingData": "breaching" if heartbeat else "notBreaching"})
     add("UserPool", "AWS::Cognito::UserPool", {
         "UserPoolName": S("agentu-${Stage}-presenters"),
+        "DeletionProtection": "ACTIVE", "MfaConfiguration": "ON", "EnabledMfas": ["SOFTWARE_TOKEN_MFA"],
         "AdminCreateUserConfig": {"AllowAdminCreateUserOnly": True},
         "UsernameAttributes": ["email"], "AutoVerifiedAttributes": ["email"],
+        "UserAttributeUpdateSettings": {"AttributesRequireVerificationBeforeUpdate": ["email"]},
         "Policies": {"PasswordPolicy": {"MinimumLength": 14, "RequireLowercase": True, "RequireUppercase": True, "RequireNumbers": True, "RequireSymbols": True, "TemporaryPasswordValidityDays": 3}},
         "AccountRecoverySetting": {"RecoveryMechanisms": [{"Name": "verified_email", "Priority": 1}]},
         "UserPoolTags": {"Project": "Agentu", "Environment": R("Stage")}},
@@ -100,7 +104,7 @@ def template():
         "ClientName": S("agentu-${Stage}-browser"), "UserPoolId": R("UserPool"), "GenerateSecret": False,
         "AllowedOAuthFlowsUserPoolClient": True, "AllowedOAuthFlows": ["code"], "AllowedOAuthScopes": ["openid", "email", "aws.cognito.signin.user.admin"],
         "SupportedIdentityProviders": ["COGNITO"], "PreventUserExistenceErrors": "ENABLED", "EnableTokenRevocation": True,
-        "AccessTokenValidity": 60, "IdTokenValidity": 60, "RefreshTokenValidity": 1,
+        "AccessTokenValidity": 15, "IdTokenValidity": 15, "RefreshTokenValidity": 1,
         "TokenValidityUnits": {"AccessToken": "minutes", "IdToken": "minutes", "RefreshToken": "days"},
         "CallbackURLs": [S("https://${Distribution.DomainName}/agentu/demo/"), S("https://${Distribution.DomainName}/agentu/app/")], "LogoutURLs": [S("https://${Distribution.DomainName}/agentu/")]})
     add("HttpApi", "AWS::ApiGatewayV2::Api", {"Name": S("agentu-${Stage}"), "ProtocolType": "HTTP"})
@@ -149,10 +153,12 @@ def template():
         {"Effect": "Deny", "Principal": "*", "Action": "s3:*", "Resource": [A("WebBucket"), S("${WebBucket.Arn}/*")], "Condition": {"Bool": {"aws:SecureTransport": "false"}}}]}})
     add("ApiErrors", "AWS::CloudWatch::Alarm", {"AlarmName": S("agentu-${Stage}-api-errors"), "AlarmDescription": "Demo API errors; inspect CloudWatch logs.", "Namespace": "AWS/Lambda", "MetricName": "Errors", "Dimensions": [{"Name": "FunctionName", "Value": R("ApiFunction")}], "Statistic": "Sum", "Period": 300, "EvaluationPeriods": 1, "Threshold": 3, "ComparisonOperator": "GreaterThanOrEqualToThreshold", "TreatMissingData": "notBreaching"})
     return {"AWSTemplateFormatVersion": "2010-09-09", "Description": "Agentu governed operations and agent runtime. Simulated funds only.",
-            "Parameters": {"Stage": {"Type": "String", "AllowedValues": ["sandbox", "demo"]}, "ArtifactBucket": {"Type": "String"}, "ArtifactKey": {"Type": "String"},
+            "Mappings": {"Environments": ENVIRONMENTS},
+            "Parameters": {"Stage": {"Type": "String", "AllowedValues": list(STAGES)}, "ArtifactBucket": {"Type": "String"}, "ArtifactKey": {"Type": "String"},
                            "BedrockModelArn": {"Type": "String", "Default": "", "AllowedPattern": "^$|^arn:aws:bedrock:eu-west-2::foundation-model/[a-z0-9][a-z0-9.:-]{1,200}$", "Description": "Optional approved London foundation model ARN; empty disables Bedrock."}},
             "Conditions": {"EnableBedrock": {"Fn::Not": [{"Fn::Equals": [R("BedrockModelArn"), ""]}]}},
             "Resources": resources, "Outputs": {
+                "Environment": {"Value": R("Stage")}, "DeploymentContract": {"Value": CONTRACT},
                 "WebsiteUrl": {"Value": S("https://${Distribution.DomainName}/agentu/")}, "DemoUrl": {"Value": S("https://${Distribution.DomainName}/agentu/demo/")}, "AppUrl": {"Value": S("https://${Distribution.DomainName}/agentu/app/")},
                 "DistributionId": {"Value": R("Distribution")}, "WebBucket": {"Value": R("WebBucket")},
                 "UserPoolId": {"Value": R("UserPool")}, "UserPoolClientId": {"Value": R("UserPoolClient")},

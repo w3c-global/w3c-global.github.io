@@ -4,7 +4,7 @@
 
 - Account: `032312375271` only. Deployment scripts verify STS identity and refuse other accounts or root credentials.
 - Region: `eu-west-2` (London).
-- Stacks: `agentu-sandbox` and `agentu-demo`.
+- Stacks: `agentu-sandbox`, `agentu-demo`, `agentu-staging` and `agentu-production`.
 - Source: `w3c-global/w3c-global.github.io`.
 - Use a business IAM/federated session. Never save access keys in this repository, GitHub secrets or the website.
 
@@ -20,10 +20,11 @@ python agentu/scripts/deploy.py plan --stage sandbox
 python agentu/scripts/deploy.py status --stage sandbox --change-set <returned-name>
 python agentu/scripts/deploy.py apply --stage sandbox --change-set <reviewed-name>
 python agentu/scripts/deploy.py status --stage sandbox
+python agentu/scripts/deploy.py inspect --stage sandbox
 python agentu/scripts/deploy.py publish --stage sandbox
 ```
 
-`plan` creates or secures an Agentu-only deployment-artifact bucket, uploads the package and prepares an unexecuted CloudFormation change set. It is not read-only. Inspect the named change set before applying. Repeat with `--stage demo` after the sandbox succeeds.
+`plan` creates or secures an Agentu-only deployment-artifact bucket, uploads the package and prepares an unexecuted CloudFormation change set. It is not read-only. Inspect the named change set before applying. Repeat with `--stage demo`, `--stage staging` and `--stage production` as the corresponding acceptance checks complete. See [Business deployment environments](environments.md) for configuration and release boundaries.
 
 The template manages website storage, CloudFront, HTTPS, Cognito and exact callback URLs, HTTP API/JWT authentication, Lambda, separate demo and platform DynamoDB tables, retention, logging, a scheduled agent/expiry worker and worker heartbeat/failure alarms. Outputs supply website, demo and application URLs. The platform table has no TTL. No custom domain is assumed.
 
@@ -31,7 +32,7 @@ If the account has restricted quotas, request only the permissions or quota chan
 
 ## Users and cost monitoring
 
-Create an invited presenter in the environment’s Cognito pool, using the business email agreed by the user. Deliver onboarding only to an explicitly authorised recipient. Do not publish passwords or copy them into task notes. Configure MFA and the recovery process appropriate to the invited users before broader access.
+Create an invited presenter in the environment’s Cognito pool, using the business email agreed by the user. Deliver onboarding only to an explicitly authorised recipient. Do not publish passwords or copy them into task notes. The template requires authenticator-app MFA in every hosted environment. Exercise enrollment, subsequent sign-in and lost-device recovery with the invited users before broader access.
 
 The operational application also requires these Cognito identities. Its email-bound institution invitations assign roles after authentication; they do not automatically provision user-pool identities or send messages. Use at least two separate identities when checking segregation of duties. The OAuth client includes the `aws.cognito.signin.user.admin` scope for token-authenticated GetUser verification and callbacks for both `/agentu/demo/` and `/agentu/app/`.
 
@@ -48,11 +49,11 @@ python agentu/scripts/setup_release_role.py --stage sandbox
 python agentu/scripts/setup_release_role.py --stage sandbox --apply
 ```
 
-The first command prints the concrete trust and permissions. The applied role allows describing its own stack, updating its API and worker Lambda code, writing its own public website prefix and invalidating its own distribution. It cannot manage IAM, modify financial records directly, or create infrastructure.
+The first command prints the concrete trust and permissions. The applied role allows describing its own stack and security configuration, updating its API and worker Lambda code, writing its own public website prefix and invalidating its own distribution. It has scoped read access to the relevant Cognito, API Gateway, DynamoDB, S3 and CloudFront configuration, without access to financial records. It cannot manage IAM, modify financial records directly, or create infrastructure.
 
-GitHub environments `agentu-sandbox` and `agentu-demo` have been created. Demo deployments are restricted to `main`; sandbox deployments allow `main` / `codex/agentu-*`. Once the AWS roles exist, set the non-secret environment variable `AWS_RELEASE_ROLE_ARN` to the corresponding output. The trust policy binds short-lived credentials to the exact W3C repository and named environment. No long-lived AWS secret is needed.
+All four GitHub environments have been created. Demo, staging and production deployments are restricted to `main`; sandbox deployments allow `main` / `codex/agentu-*`. Once the AWS roles exist, set the non-secret environment variable `AWS_RELEASE_ROLE_ARN` to the corresponding output. The trust policy binds short-lived credentials to the exact W3C repository and named environment. No long-lived AWS secret is needed.
 
-The **Release Agentu** workflow runs tests and template validation before assuming the environment’s release role. It is manually dispatched. The **Agentu checks** workflow runs on relevant branches and pull requests.
+The **Release Agentu** workflow runs tests and template validation before assuming the environment’s release role. The release script then checks the actual deployed identity, route, runtime, storage and distribution settings before changing code. Both Lambda packages must match the current build before publication. It is manually dispatched. The **Agentu checks** workflow runs on relevant branches and pull requests.
 
 ## Smoke tests before handover
 
