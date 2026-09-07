@@ -3,6 +3,7 @@ import json
 import sys
 from pathlib import Path
 from environments import CONTRACT, ENVIRONMENTS, STAGES
+from monitoring import alarm_specs, dashboard, topic_policy
 
 R = lambda name: {"Ref": name}
 A = lambda name, attr="Arn": {"Fn::GetAtt": [name, attr]}
@@ -106,14 +107,6 @@ def template():
     add("WorkerPermission", "AWS::Lambda::Permission", {
         "Action": "lambda:InvokeFunction", "FunctionName": R("WorkerFunction"), "Principal": "events.amazonaws.com", "SourceArn": A("WorkerSchedule")})
     add("WorkerInvokeConfig", "AWS::Lambda::EventInvokeConfig", {"FunctionName": R("WorkerFunction"), "Qualifier": "$LATEST", "MaximumEventAgeInSeconds": 300, "MaximumRetryAttempts": 0})
-    add("WorkerErrors", "AWS::CloudWatch::Alarm", {"AlarmName": S("agentu-${Stage}-worker-errors"), "AlarmDescription": "Worker invocation failed; durable jobs are retained for retry.", "Namespace": "AWS/Lambda", "MetricName": "Errors", "Dimensions": [{"Name": "FunctionName", "Value": R("WorkerFunction")}], "Statistic": "Sum", "Period": 300, "EvaluationPeriods": 1, "Threshold": 1, "ComparisonOperator": "GreaterThanOrEqualToThreshold", "TreatMissingData": "notBreaching"})
-    for metric in ("FailedRuns", "ExpiryRetries", "Heartbeats"):
-        heartbeat = metric == "Heartbeats"
-        add("Worker" + metric, "AWS::CloudWatch::Alarm", {
-            "AlarmName": S("agentu-${Stage}-worker-" + metric.lower()), "Namespace": "Agentu/Worker", "MetricName": metric,
-            "Dimensions": [{"Name": "Stage", "Value": R("Stage")}], "Statistic": "Sum", "Period": 300, "EvaluationPeriods": 1,
-            "Threshold": 1, "ComparisonOperator": "LessThanThreshold" if heartbeat else "GreaterThanOrEqualToThreshold",
-            "TreatMissingData": "breaching" if heartbeat else "notBreaching"})
     add("UserPool", "AWS::Cognito::UserPool", {
         "UserPoolName": S("agentu-${Stage}-presenters"),
         "DeletionProtection": "ACTIVE", "MfaConfiguration": "ON", "EnabledMfas": ["SOFTWARE_TOKEN_MFA"],
@@ -176,7 +169,29 @@ def template():
     add("WebBucketPolicy", "AWS::S3::BucketPolicy", {"Bucket": R("WebBucket"), "PolicyDocument": {"Version": "2012-10-17", "Statement": [
         {"Effect": "Allow", "Principal": {"Service": "cloudfront.amazonaws.com"}, "Action": "s3:GetObject", "Resource": S("${WebBucket.Arn}/*"), "Condition": {"StringEquals": {"AWS:SourceArn": S("arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${Distribution}")}}},
         {"Effect": "Deny", "Principal": "*", "Action": "s3:*", "Resource": [A("WebBucket"), S("${WebBucket.Arn}/*")], "Condition": {"Bool": {"aws:SecureTransport": "false"}}}]}})
-    add("ApiErrors", "AWS::CloudWatch::Alarm", {"AlarmName": S("agentu-${Stage}-api-errors"), "AlarmDescription": "Demo API errors; inspect CloudWatch logs.", "Namespace": "AWS/Lambda", "MetricName": "Errors", "Dimensions": [{"Name": "FunctionName", "Value": R("ApiFunction")}], "Statistic": "Sum", "Period": 300, "EvaluationPeriods": 1, "Threshold": 3, "ComparisonOperator": "GreaterThanOrEqualToThreshold", "TreatMissingData": "notBreaching"})
+    add("OperationsTopic", "AWS::SNS::Topic", {"TopicName": S("agentu-${Stage}-operations"),
+        "Tags": [{"Key": "Project", "Value": "Agentu"}, {"Key": "Environment", "Value": R("Stage")}]}, DeletionPolicy="Retain", UpdateReplacePolicy="Retain")
+    add("OperationsTopicPolicy", "AWS::SNS::TopicPolicy", {"Topics": [R("OperationsTopic")],
+        "PolicyDocument": {"Fn::Sub": json.dumps(topic_policy("${Stage}", "${OperationsTopic}", "${AWS::AccountId}", "${AWS::Region}"))}})
+    monitored = {"FunctionName": R("ApiFunction"), "WorkerFunctionName": R("WorkerFunction"), "ApiId": R("HttpApi"),
+                 "RecordsTable": R("Records"), "PlatformTable": R("PlatformRecords")}
+    for logical, (suffix, props) in alarm_specs(R("Stage"), monitored).items():
+        add(logical, "AWS::CloudWatch::Alarm", {"AlarmName": S("agentu-${Stage}-" + suffix),
+            "AlarmDescription": "Agentu operational baseline; inspect environment metrics and the operations runbook.",
+            **props, "ActionsEnabled": True, "AlarmActions": [R("OperationsTopic")], "OKActions": [R("OperationsTopic")], "InsufficientDataActions": []},
+            DependsOn="OperationsTopicPolicy")
+    dashboard_values = {k: "${" + v["Ref"] + "}" for k, v in monitored.items()}
+    add("OperationsDashboard", "AWS::CloudWatch::Dashboard", {"DashboardName": S("agentu-${Stage}-operations"),
+        "DashboardBody": {"Fn::Sub": json.dumps(dashboard("${Stage}", dashboard_values, "${AWS::Region}", "${AWS::AccountId}"))}})
+    add("OperationsReadPolicy", "AWS::IAM::ManagedPolicy", {"ManagedPolicyName": S("agentu-${Stage}-operations-read"),
+        "Description": "Inspect Agentu metrics and notification configuration; no publishing, subscription or financial writes",
+        "PolicyDocument": {"Version": "2012-10-17", "Statement": [
+            {"Effect": "Allow", "Action": "cloudformation:DescribeStacks", "Resource": R("AWS::StackId")},
+            {"Effect": "Allow", "Action": "cloudwatch:DescribeAlarms", "Resource": S("arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:agentu-${Stage}-*")},
+            {"Effect": "Allow", "Action": "cloudwatch:GetDashboard", "Resource": S("arn:${AWS::Partition}:cloudwatch::${AWS::AccountId}:dashboard/agentu-${Stage}-operations")},
+            {"Effect": "Allow", "Action": "cloudwatch:GetMetricData", "Resource": "*", "Condition": {"StringEquals": {"aws:RequestedRegion": R("AWS::Region")}}},
+            {"Effect": "Allow", "Action": ["sns:GetTopicAttributes", "sns:ListSubscriptionsByTopic"], "Resource": R("OperationsTopic")},
+            {"Effect": "Allow", "Action": ["events:DescribeRule", "events:ListTargetsByRule"], "Resource": A("WorkerSchedule")}]}})
     return {"AWSTemplateFormatVersion": "2010-09-09", "Description": "Agentu governed operations and agent runtime. Simulated funds only.",
             "Mappings": {"Environments": ENVIRONMENTS},
             "Parameters": {"Stage": {"Type": "String", "AllowedValues": list(STAGES)}, "ArtifactBucket": {"Type": "String"}, "ArtifactKey": {"Type": "String"},
@@ -184,6 +199,8 @@ def template():
             "Conditions": {"EnableBedrock": {"Fn::Not": [{"Fn::Equals": [R("BedrockModelArn"), ""]}]}},
             "Resources": resources, "Outputs": {
                 "Environment": {"Value": R("Stage")}, "DeploymentContract": {"Value": CONTRACT},
+                "OperationsTopicArn": {"Value": R("OperationsTopic")}, "OperationsDashboard": {"Value": R("OperationsDashboard")}, "OperationsReadPolicyArn": {"Value": R("OperationsReadPolicy")},
+                "OperationsUrl": {"Value": S("https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=agentu-${Stage}-operations")},
                 "EvidenceKeyArn": {"Value": A("EvidenceKey")}, "EvidenceBucket": {"Value": R("EvidenceBucket")}, "EvidenceOperatorPolicyArn": {"Value": R("EvidenceOperatorPolicy")},
                 "WebsiteUrl": {"Value": S("https://${Distribution.DomainName}/agentu/")}, "DemoUrl": {"Value": S("https://${Distribution.DomainName}/agentu/demo/")}, "AppUrl": {"Value": S("https://${Distribution.DomainName}/agentu/app/")},
                 "DistributionId": {"Value": R("Distribution")}, "WebBucket": {"Value": R("WebBucket")},

@@ -9,13 +9,13 @@ The requested end state is the full platform. The work below is verified progres
 - Server-side policy engine with integer money values, fixed mandates, hard-limit precedence and rechecks at approval.
 - Idempotency, atomic state updates and user/workspace isolation.
 - Local rehearsal server and Windows launcher.
-- 125 automated tests covering the demo, institution service, version-checked storage, HTTP authentication, export verification and signed evidence handling.
+- 138 automated tests covering the demo, institution service, version-checked storage, HTTP authentication, exports, signed evidence and operations monitoring.
 - Browser checks: allowed sweep, blocked destination and approval produce the expected balances and 10 linked audit events.
 - JavaScript syntax checks and CloudFormation schema/lint validation pass.
 - Allowlisted static build and Lambda package.
 - Infrastructure templates for separate AWS sandbox, demo, staging and production stacks in the designated account, with required authenticator-app MFA and deletion protection.
 - CI checks, OIDC release workflow, narrow release-role setup, and deployment/rollback instructions.
-- Work is saved on the business branch for W3C draft pull request #1. The CI workflow runs all 125 tests, JavaScript checks and CloudFormation validation; check its result against the current commit before deployment.
+- Work is saved on the business branch for W3C draft pull request #1. The CI workflow runs all 138 tests, JavaScript checks and CloudFormation validation; check its result against the current commit before deployment.
 - All four GitHub release environments created with branch restrictions; staging and production allow only `main`. AWS role attachment remains pending.
 - Founder walkthrough for Tuesday 8 September.
 - Operational application at `/agentu/app/`: onboarding, institutions, accounts, funding, operations, policies, team access, ledger and audit.
@@ -60,6 +60,13 @@ The requested end state is the full platform. The work below is verified progres
 - Each environment template adds a retained RSA-3072 signing key, private versioned archive with 30-day governance retention and an unattached operator policy. Application and release roles receive no signing or archive permission.
 - Tests perform real RSA-PSS signing and verification with ephemeral fictional keys, and reject altered signatures/files, mixed institutions or snapshots, coordinated journal changes and wrong trust records. Archive tests verify exact versions, checksums, uncertain-upload retries, retention and downloaded packets. AWS transports are mocked.
 - The actual local 45-event audit and five-journal exports pass the new paired consistency check. They have not been signed with AWS. Hosted signing/archive/download, operator assignment and automatic checkpoint delivery remain outstanding. See `evidence.md`.
+
+## Operations monitoring verification
+
+- Each environment now defines eleven alarms, a dashboard and an operations topic: API invocation and HTTP errors, API latency, worker failures/expiry/heartbeat, and read/write throttling on both tables. No subscriptions or recipients are configured.
+- A separate read-only inspector verifies alarm definitions/routing, topic policy, confirmation counts, dashboard bindings and the worker's actual schedule/target. It reads recent metrics, preserves missing values as unknown and requires recent heartbeat/API samples. An observed OK result never claims alert delivery, cost controls or hosted journeys.
+- Tests cover all four stages, drift, incorrect accounts/routes, pending recipients, stale/partial/invalid metrics, missing heartbeat, API errors, disabled/redirected workers and pagination. Captured request and mocked response shapes match the installed AWS SDK; no AWS monitoring calls were made.
+- The expanded readable template exceeds CloudFormation's inline limit. Deployment now validates and submits an equivalent compact body, with a size check before artifact changes. The full template passes lint and the compact-body regression tests. See `monitoring.md` for response steps and the remaining hosted drills.
 
 ## Local recovery verification
 

@@ -26,7 +26,9 @@ python agentu/scripts/deploy.py publish --stage sandbox
 
 `plan` creates or secures an Agentu-only deployment-artifact bucket, uploads the package and prepares an unexecuted CloudFormation change set. It is not read-only. Inspect the named change set before applying. Repeat with `--stage demo`, `--stage staging` and `--stage production` as the corresponding acceptance checks complete. See [Business deployment environments](environments.md) for configuration and release boundaries.
 
-The template manages website storage, CloudFront, HTTPS, Cognito and exact callback URLs, HTTP API/JWT authentication, Lambda, separate demo and platform DynamoDB tables, retention, logging, a scheduled agent/expiry worker and worker heartbeat/failure alarms. Outputs supply website, demo and application URLs. The platform table has no TTL. No custom domain is assumed.
+The template manages website storage, CloudFront, HTTPS, Cognito and exact callback URLs, HTTP API/JWT authentication, Lambda, separate demo and platform DynamoDB tables, retention, logging, a scheduled agent/expiry worker, evidence resources and eleven operational alarms. Outputs supply website, demo, application and operations-dashboard URLs. The platform table has no TTL. No custom domain is assumed.
+
+The build checks the compact template's byte size before creating artifacts. Deployment validates that same compact JSON before changing artifact storage, then supplies it unchanged to the named change set. This preserves every resource while staying within the CloudFormation inline-body limit; future oversize templates stop the build and require an updated deployment transport.
 
 If the account has restricted quotas, request only the permissions or quota changes required by the named Agentu resources. Do not deploy into a different account as a workaround.
 
@@ -38,7 +40,7 @@ The operational application also requires these Cognito identities. Its email-bo
 
 Before declaring cloud readiness, configure and verify the account’s budget and notification recipient. No budget threshold or paid capacity reservation is silently created by these templates. API throttling reduces request spikes; it is not a hard spending cap. Check the [AWS pricing calculator](https://calculator.aws/) for the selected region and current service rates.
 
-CloudWatch logs omit request bodies, authentication tokens and user identifiers from the application’s own error messages. The Lambda error alarm has no email/SNS recipient until one is explicitly configured. Inspect HTTP API 5xx rates as well: handled application errors do not increment Lambda’s Errors metric.
+CloudWatch logs omit request bodies, authentication tokens and user identifiers from the application’s own error messages. Separate HTTP `5xx` and latency alarms supplement Lambda invocation-error alarms. All eleven alarms route to the stage's operations topic; the template creates no recipient subscriptions. Use [Operations monitoring and response](monitoring.md) to inspect actual alarm configuration, recent metrics and routing, then verify delivery to an authorised business recipient.
 
 ## Short-lived GitHub deployment access
 
@@ -57,7 +59,7 @@ The **Release Agentu** workflow runs tests and template validation before assumi
 
 ## Smoke tests before handover
 
-1. Both stack states are `CREATE_COMPLETE` or `UPDATE_COMPLETE`.
+1. Each required environment stack is `CREATE_COMPLETE` or `UPDATE_COMPLETE`.
 2. Website, demo assets and configuration load over HTTPS.
 3. `/api/health` succeeds and identifies the intended environment.
 4. `/api/state` rejects a request with no token.
@@ -73,6 +75,7 @@ The **Release Agentu** workflow runs tests and template validation before assumi
 14. Verify worker heartbeat, failed-run and expiry-retry metrics and alarm delivery. If Bedrock is configured, record an actual model invocation and model ARN; mock tests do not verify model availability.
 15. Request and independently approve a full journal reversal, verifying the retained original and inverse new entry. Import a statement, verify fixed-cut-off matching, manual rematching, clean review and explicit exception acceptance. Verify a comparison export independently.
 16. Run concurrent requests against the deployed DynamoDB adapter and record transaction-conflict/idempotency outcomes. Local storage tests and mocked AWS request checks do not substitute for this.
+17. Run `operations.py --stage <stage> --require-healthy`, inspect the rendered AWS dashboard and record alarm/recovery delivery to the authorised recipient. Confirm cost controls separately; a green metric inspection does not establish delivery or a spending cap.
 
 ## Rollback and recovery
 

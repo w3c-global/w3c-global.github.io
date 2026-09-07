@@ -60,6 +60,7 @@ See [Platform operation and API guide](docs/platform-operations.md) and [full co
 - [AWS operations and release guide](docs/aws-operations.md)
 - [Architecture and limits](docs/architecture.md)
 - [Signed evidence snapshots](docs/evidence.md)
+- [Operations monitoring and response](docs/monitoring.md)
 
 Hosted sessions require invited Cognito users and use DynamoDB with atomic conditional writes. Browser sign-in uses the OAuth authorisation-code flow with PKCE. GitHub releases use short-lived OIDC credentials and an environment-specific release role; infrastructure creation remains a separate operation.
 

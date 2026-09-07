@@ -13,7 +13,16 @@ sys.path.insert(0, str(SITE / "infra"))
 from template import template
 
 
+def inline_template(document):
+    body = json.dumps(document, separators=(",", ":"), ensure_ascii=True, allow_nan=False)
+    if len(body.encode("utf-8")) > 51200:
+        raise ValueError("The template exceeds CloudFormation's inline limit; update the deployment transport before releasing this build.")
+    return body
+
+
 def build():
+    generated = template()
+    body = inline_template(generated)
     static = OUT / "static" / "agentu"
     static.mkdir(parents=True, exist_ok=True)
     files = [SITE / name for name in ["index.html", "site.css", "site.js", "privacy.html"]]
@@ -28,9 +37,9 @@ def build():
             archive.write(SITE / "backend" / name, name)
         for source in sorted((SITE / "backend" / "platform_core").glob("*.py")):
             archive.write(source, "platform_core/" + source.name)
-    (OUT / "template.json").write_text(json.dumps(template(), indent=2), encoding="utf-8")
+    (OUT / "template.json").write_text(json.dumps(generated, indent=2), encoding="utf-8")
     manifest = {"static_files": ["agentu/" + p.relative_to(SITE).as_posix() for p in files],
-                "lambda_sha256": hashlib.sha256(package.read_bytes()).hexdigest(), "mode": "sandbox-platform", "simulated": True}
+                "lambda_sha256": hashlib.sha256(package.read_bytes()).hexdigest(), "template_body_bytes": len(body.encode("utf-8")), "mode": "sandbox-platform", "simulated": True}
     (OUT / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     print(f"Built {len(files)} static files, Lambda package and CloudFormation template.")
     return manifest

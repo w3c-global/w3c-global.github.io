@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 import boto3
 from botocore.exceptions import ClientError
-from build import build, ROOT, OUT
+from build import build, inline_template, ROOT, OUT
 from environments import EXPECTED_ACCOUNT, REGION, STAGES, environment
 from environment_check import stack_identity, verify_environment
 
@@ -58,10 +58,7 @@ def model_parameter(model_arn, existing_parameters, updating):
 def plan(session, stage, model_arn=None):
     environment(stage)
     manifest = build()
-    bucket = artifact_bucket(session)
-    key = f"{stage}/lambda/{manifest['lambda_sha256']}.zip"
-    s3 = session.client("s3")
-    s3.upload_file(str(OUT / "lambda.zip"), bucket, key, ExtraArgs={"ServerSideEncryption": "AES256", "ExpectedBucketOwner": EXPECTED_ACCOUNT})
+    body = inline_template(json.loads((OUT / "template.json").read_text(encoding="utf-8")))
     cf = session.client("cloudformation")
     stack = "agentu-" + stage
     kind = "CREATE"
@@ -76,10 +73,14 @@ def plan(session, stage, model_arn=None):
         if "does not exist" not in str(exc):
             raise
     name = "agentu-" + time.strftime("%Y%m%d-%H%M%S")
-    cf.validate_template(TemplateBody=(OUT / "template.json").read_text())
+    cf.validate_template(TemplateBody=body)
+    bucket = artifact_bucket(session)
+    key = f"{stage}/lambda/{manifest['lambda_sha256']}.zip"
+    s3 = session.client("s3")
+    s3.upload_file(str(OUT / "lambda.zip"), bucket, key, ExtraArgs={"ServerSideEncryption": "AES256", "ExpectedBucketOwner": EXPECTED_ACCOUNT})
     cf.create_change_set(StackName=stack, ChangeSetName=name, ChangeSetType=kind,
         Description="Agentu governed operations and agent runtime; simulated funds only",
-        TemplateBody=(OUT / "template.json").read_text(), Capabilities=["CAPABILITY_NAMED_IAM"],
+        TemplateBody=body, Capabilities=["CAPABILITY_NAMED_IAM"],
         Parameters=[{"ParameterKey": "Stage", "ParameterValue": stage}, {"ParameterKey": "ArtifactBucket", "ParameterValue": bucket}, {"ParameterKey": "ArtifactKey", "ParameterValue": key}, model_parameter(model_arn, existing_parameters, kind == "UPDATE")],
         Tags=[{"Key": "Project", "Value": "Agentu"}, {"Key": "Environment", "Value": stage}, {"Key": "Owner", "Value": "W3C"}])
     # Keep this bounded so callers can continue preparing the walkthrough while AWS works.

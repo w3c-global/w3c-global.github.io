@@ -18,6 +18,12 @@ flowchart LR
   Worker --> Platform
   Worker -->|Optional one-model permission| Bedrock
   Worker --> Logs
+  Operator --> Monitoring[Read-only operations inspection]
+  Monitoring --> Logs
+  DynamoDB -->|Metrics| Logs
+  Platform -->|Metrics| Logs
+  Logs --> Alarms[API, worker and table alarms]
+  Alarms --> Topic[Stage operations topic]
 ```
 
 Separate sandbox, demo, staging and production stack definitions use separate S3 buckets, user pools, Lambda functions, API gateways, data tables, evidence keys and logs in account `032312375271`, London. These resources have not yet been deployed. There is no VPC or always-on application server in this design.
